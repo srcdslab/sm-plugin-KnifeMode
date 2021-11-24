@@ -5,7 +5,7 @@
 
 #pragma semicolon 1
 
-#define VERSION "2.0"
+#define VERSION "2.3"
 
 #define WEAPONS_MAX_LENGTH 32
 #define DMG_GENERIC 0
@@ -16,7 +16,7 @@ new Handle:explodeTime;
 public Plugin:myinfo =
 {
     name = "[ZR] Knife Mode",
-    author = "Franc1sco steam: franug, inGame, maxime1907",
+    author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
     description = "Kill zombies with knife",
     version = VERSION,
     url = ""
@@ -28,10 +28,23 @@ public OnPluginStart()
 
     HookEvent("player_spawn", PlayerSpawn);
     HookEvent("player_hurt", EnDamage);
+    HookEvent("round_start", Event_RoundStart);
 
     explodeTime = CreateConVar("sm_knifemode_time", "3", "Seconds that a zombie has to catch any human");
 
     AutoExecConfig(true);
+}
+
+public void Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
+{
+    if (GetEngineVersion() == Engine_CSGO)
+    {
+        CPrintToChatAll("{green}[Knife Mode] {darkred}You can use your knife to kill Zombies!");
+    }
+    else
+    {
+        CPrintToChatAll("{fullred}[Knife Mode] {white}You can use your knife to kill Zombies!");
+    }
 }
 
 public IsValidClient( client ) 
@@ -60,8 +73,18 @@ public EnDamage(Handle:event, const String:name[], bool:dontBroadcast)
             if(StrEqual(weapon, "knife", false))
             {
                 g_ZombieExplode[client] = true;
-                PrintCenterText(client, "{green}[Knife Mode] {white}You have %f seconds to catch any human or you will die!", GetConVarFloat(explodeTime), attacker);
 
+                if (GetEngineVersion() == Engine_CSGO)
+                {
+                    PrintHintText(client, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You have %f seconds to catch any human or you will die!</font>", GetConVarFloat(explodeTime), attacker);
+                    CPrintToChat(client, "{green}[Knife Mode] {gray}You have {red}%f seconds {gray}to catch any human {red}or you will die!", GetConVarFloat(explodeTime), attacker);
+                }   
+                else
+                {
+                    PrintCenterText(client, "[Knife Mode] You have %f seconds to catch any human or you will die!", GetConVarFloat(explodeTime), attacker);
+                    CPrintToChat(client, "{green}[Knife Mode] {white}You have {red}%f seconds {white}to catch any human {red}or you will die!", GetConVarFloat(explodeTime), attacker);
+                 }
+                 
                 new Handle:pack;
                 CreateDataTimer(GetConVarFloat(explodeTime), ByeZM, pack);
                 WritePackCell(pack, client);
@@ -79,7 +102,16 @@ public Action:ZR_OnClientInfect(&client, &attacker, &bool:motherInfect, &bool:re
     if (g_ZombieExplode[attacker])
     {
         g_ZombieExplode[attacker] = false;
-        PrintCenterText(attacker, "{green}[Knife Mode] {white}You have caught a human, you are saved!");
+        if (GetEngineVersion() == Engine_CSGO)
+        {
+        	PrintHintText(attacker, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You have caught a human, you are saved!</font>");
+        	CPrintToChat(attacker, "{green}[Knife Mode] {gray}You have caught a human, you are saved!");
+        }
+        else
+        {
+        	PrintCenterText(attacker, "[Knife Mode] You have caught a human, you are saved!");
+        	CPrintToChat(attacker, "{green}[Knife Mode] {white}You have caught a human, you are saved!");
+        }
     }
     return Plugin_Continue;
 }
@@ -142,4 +174,3 @@ stock DealDamage(nClientVictim, nDamage, nClientAttacker = 0, nDamageType = DMG_
         }
     }
 }
-
