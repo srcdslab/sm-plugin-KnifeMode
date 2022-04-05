@@ -6,7 +6,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define VERSION "2.5.2"
+#define VERSION "2.5.3"
 
 #define WEAPONS_MAX_LENGTH 32
 #define DMG_GENERIC 0
@@ -55,7 +55,7 @@ public void OnAllPluginsLoaded()
 public void OnMapEnd()
 {
     g_cvSpectate.IntValue = 1;
-    LogMessage("[KnifeMode] Map Ended... Changed cvar sm_spec_enable to .");
+    LogMessage("[KnifeMode] Map Ended... Changed cvar sm_spec_enable to 1.");
 }
 
 public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
