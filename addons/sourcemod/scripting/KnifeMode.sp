@@ -11,7 +11,7 @@
 #define WEAPONS_MAX_LENGTH 32
 #define DMG_GENERIC 0
 
-bool g_ZombieExplode[MAXPLAYERS+1] = false;
+bool g_ZombieExplode[MAXPLAYERS+1] = { false, ... };
 
 ConVar g_explodeTime;
 ConVar g_cvSpectate;
@@ -43,7 +43,7 @@ public void OnAllPluginsLoaded()
 {
     if (!LibraryExists("Spectate"))
 	{
-	   	LogError("[KnifeMode] Spectate plugin is required or not loaded. Can't change sm_spec_enable to 0.");
+        LogError("[KnifeMode] Spectate plugin is required or not loaded. Can't change sm_spec_enable to 0.");
     }
     else
     {
@@ -131,13 +131,13 @@ public Action ZR_OnClientInfect(int &client, int &attacker, bool &motherInfect, 
         g_ZombieExplode[attacker] = false;
         if (GetEngineVersion() == Engine_CSGO)
         {
-        	PrintHintText(attacker, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You have caught a human, you are saved!</font>");
-        	CPrintToChat(attacker, "{green}[Knife Mode] {gray}You have caught a human, you are saved!");
+            PrintHintText(attacker, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You have caught a human, you are saved!</font>");
+            CPrintToChat(attacker, "{green}[Knife Mode] {gray}You have caught a human, you are saved!");
         }
         else
         {
-        	PrintCenterText(attacker, "[Knife Mode] You have caught a human, you are saved!");
-        	CPrintToChat(attacker, "{green}[Knife Mode] {white}You have caught a human, you are saved!");
+            PrintCenterText(attacker, "[Knife Mode] You have caught a human, you are saved!");
+            CPrintToChat(attacker, "{green}[Knife Mode] {white}You have caught a human, you are saved!");
         }
     }
     return Plugin_Continue;
@@ -165,6 +165,7 @@ public Action ByeZM(Handle timer, Handle pack)
             ForcePlayerSuicide(client);
         }
     }
+    return Plugin_Continue;
 }
 
 public void PlayerSpawn(Handle event, const char[] name, bool dontBroadcast)
@@ -204,6 +205,7 @@ stock Action DealDamage(int nClientVictim, int nDamage, int nClientAttacker = 0,
             RemoveEdict(EntityPointHurt);
         }
     }
+    return Plugin_Continue;
 }
 
 void DisableSpec()
