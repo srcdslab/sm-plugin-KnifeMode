@@ -6,7 +6,7 @@
 #pragma semicolon 1
 #pragma newdecls required
 
-#define VERSION "2.5.3"
+#define VERSION "2.5.4"
 
 #define WEAPONS_MAX_LENGTH 32
 #define DMG_GENERIC 0
@@ -23,6 +23,12 @@ public Plugin myinfo =
     description = "Kill zombies with knife",
     version = VERSION,
     url = ""
+}
+
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+	RegPluginLibrary("KnifeMode");
+	return APLRes_Success;
 }
 
 public void OnPluginStart()
@@ -54,8 +60,11 @@ public void OnAllPluginsLoaded()
 
 public void OnMapEnd()
 {
+    char sFilename[256];
+    GetPluginFilename(INVALID_HANDLE, sFilename, sizeof(sFilename));
     g_cvSpectate.IntValue = 1;
     LogMessage("[KnifeMode] Map Ended... Changed cvar sm_spec_enable to 1.");
+    ServerCommand("sm plugins unload %s", sFilename);
 }
 
 public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
