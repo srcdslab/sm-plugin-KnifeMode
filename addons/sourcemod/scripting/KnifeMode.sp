@@ -5,17 +5,21 @@
 #include <sdktools>
 #include <zombiereloaded>
 #include <multicolors>
-#tryinclude <Spectate>
 
 #define WEAPONS_MAX_LENGTH 32
 #define DMG_GENERIC 0
 
 bool g_ZombieExplode[MAXPLAYERS+1] = { false, ... };
 
+bool g_bSpectate = false;
+
 ConVar
     g_cvExplodeTime
-    , g_cvSpectate
+    , g_cvSpectateDisable
     , g_cvUnload;
+
+ConVar g_cvSpectate = null;
+bool g_bSpectateHooked = false;
 
 public Plugin myinfo =
 {
@@ -35,12 +39,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 public void OnPluginStart()
 {
     g_cvExplodeTime = CreateConVar("sm_knifemode_time", "3", "Seconds that a zombie has to catch any human");
-    g_cvUnload      = CreateConVar("sm_knifemode_unload", "1", "Automaticly unload plugin on map end [0 = No | 1 = Yes, unload it.]");
-
-#if defined _Spectate_included
-    g_cvSpectate = FindConVar("sm_spec_enable");
-    g_cvSpectate.AddChangeHook(OnConVarChanged);
-#endif
+    g_cvUnload = CreateConVar("sm_knifemode_unload", "0", "Automaticaly unload plugin on map end [0 = No | 1 = Yes, unload it.]");
+    g_cvSpectateDisable = CreateConVar("sm_knifemode_spectate_disable", "0", "Automaticaly disable the spectate plugin on map start [0 = No | 1 = Yes, disable it.]");
 
     HookEvent("player_spawn", PlayerSpawn);
     HookEvent("player_hurt", EnDamage);
@@ -49,13 +49,38 @@ public void OnPluginStart()
     AutoExecConfig(true);
 }
 
-#if defined _Spectate_included
 public void OnAllPluginsLoaded()
 {
-    DisableSpec();
-    LogMessage("[KnifeMode] Changed cvar sm_spec_enable to 0.");
+    g_bSpectate = LibraryExists("Spectate");
 }
-#endif
+
+public void OnLibraryAdded(const char[] name)
+{
+    if (StrEqual(name, "Spectate"))
+    {
+        g_bSpectate = true;
+    }
+}
+
+public void OnLibraryRemoved(const char[] name)
+{
+    if (StrEqual(name, "Spectate"))
+    {
+        g_bSpectate = false;
+        if (g_bSpectateHooked)
+        {
+            g_cvSpectate.RemoveChangeHook(OnConVarChanged);
+            g_cvSpectate = null;
+            g_bSpectateHooked = false;
+        }
+    }
+}
+
+public void OnConfigsExecuted()
+{
+    if (g_cvSpectateDisable.BoolValue)
+        ToggleSpecEnable(false);
+}
 
 public void OnMapEnd()
 {
@@ -65,22 +90,18 @@ public void OnMapEnd()
         GetPluginFilename(INVALID_HANDLE, sFilename, sizeof(sFilename));
         ServerCommand("sm plugins unload %s", sFilename);
     }
-    #if defined _Spectate_included
-        g_cvSpectate.IntValue = 1;
-        LogMessage("[KnifeMode] Map Ended... Changed cvar sm_spec_enable to 1.");
-    #endif
+
+    if (g_cvSpectateDisable.BoolValue)
+        ToggleSpecEnable(true);
 }
 
-#if defined _Spectate_included
 public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-    if (convar == g_cvSpectate)
+    if (convar == g_cvSpectate && g_cvSpectateDisable.BoolValue && g_cvSpectate.BoolValue)
     {
-        if(g_cvSpectate.IntValue != 0)
-            DisableSpec();
+        ToggleSpecEnable(false);
     }
 }
-#endif
 
 public void Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 {
@@ -213,9 +234,21 @@ stock Action DealDamage(int nClientVictim, int nDamage, int nClientAttacker = 0,
     return Plugin_Continue;
 }
 
-void DisableSpec()
+void ToggleSpecEnable(bool enable)
 {
-    g_cvSpectate.IntValue = 0;
+    if (!g_bSpectate)
+        return;
+
+    if (!g_bSpectateHooked)
+    {
+        g_cvSpectate = FindConVar("sm_spec_enable");
+        g_cvSpectate.AddChangeHook(OnConVarChanged);
+        g_bSpectateHooked = true;
+    }
+
+    g_cvSpectate.IntValue = view_as<int>(enable);
+
+    LogMessage("[KnifeMode] Changed cvar sm_spec_enable to %d.", enable);
 }
 
 bool IsValidClient(int client, bool nobots = true)
