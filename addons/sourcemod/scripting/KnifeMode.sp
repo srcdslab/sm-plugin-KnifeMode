@@ -1,36 +1,46 @@
+#pragma semicolon 1
+#pragma newdecls required
+
 #include <sourcemod>
 #include <sdktools>
 #include <zombiereloaded>
 #include <multicolors>
-
-#pragma semicolon 1
-#pragma newdecls required
-
-#define VERSION "2.5.3"
 
 #define WEAPONS_MAX_LENGTH 32
 #define DMG_GENERIC 0
 
 bool g_ZombieExplode[MAXPLAYERS+1] = { false, ... };
 
-ConVar g_explodeTime;
-ConVar g_cvSpectate;
+bool g_bSpectate = false;
+
+ConVar
+    g_cvExplodeTime
+    , g_cvSpectateDisable
+    , g_cvUnload;
+
+ConVar g_cvSpectate = null;
+bool g_bSpectateHooked = false;
 
 public Plugin myinfo =
 {
     name = "[ZR] Knife Mode",
     author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
     description = "Kill zombies with knife",
-    version = VERSION,
+    version = "2.6",
     url = ""
+}
+
+public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
+{
+	RegPluginLibrary("KnifeMode");
+	return APLRes_Success;
 }
 
 public void OnPluginStart()
 {
-    g_explodeTime = CreateConVar("sm_knifemode_time", "3", "Seconds that a zombie has to catch any human");
-
-    g_cvSpectate = FindConVar("sm_spec_enable");
-    g_cvSpectate.AddChangeHook(OnConVarChanged);
+    g_cvExplodeTime = CreateConVar("sm_knifemode_time", "3", "Seconds that a zombie has to catch any human");
+    g_cvUnload = CreateConVar("sm_knifemode_unload", "0", "Automaticaly unload plugin on map end [0 = No | 1 = Yes, unload it.]");
+    g_cvSpectateDisable = CreateConVar("sm_knifemode_spectate_disable", "0", "Automaticaly disable the spectate plugin on map start [0 = No | 1 = Yes, disable it.]");
 
     HookEvent("player_spawn", PlayerSpawn);
     HookEvent("player_hurt", EnDamage);
@@ -41,55 +51,75 @@ public void OnPluginStart()
 
 public void OnAllPluginsLoaded()
 {
-    if (!LibraryExists("Spectate"))
-	{
-        LogError("[KnifeMode] Spectate plugin is required or not loaded. Can't change sm_spec_enable to 0.");
-    }
-    else
+    g_bSpectate = LibraryExists("Spectate");
+}
+
+public void OnLibraryAdded(const char[] name)
+{
+    if (StrEqual(name, "Spectate"))
     {
-        DisableSpec();
-        LogMessage("[KnifeMode] Changed cvar sm_spec_enable to 0.");
+        g_bSpectate = true;
     }
+}
+
+public void OnLibraryRemoved(const char[] name)
+{
+    if (StrEqual(name, "Spectate"))
+    {
+        g_bSpectate = false;
+        if (g_bSpectateHooked)
+        {
+            g_cvSpectate.RemoveChangeHook(OnConVarChanged);
+            g_cvSpectate = null;
+            g_bSpectateHooked = false;
+        }
+    }
+}
+
+public void OnConfigsExecuted()
+{
+    if (g_cvSpectateDisable.BoolValue)
+        ToggleSpecEnable(false);
 }
 
 public void OnMapEnd()
 {
-    g_cvSpectate.IntValue = 1;
-    LogMessage("[KnifeMode] Map Ended... Changed cvar sm_spec_enable to 1.");
+    if (g_cvUnload.IntValue >= 1)
+    {
+        char sFilename[256];
+        GetPluginFilename(INVALID_HANDLE, sFilename, sizeof(sFilename));
+        ServerCommand("sm plugins unload %s", sFilename);
+    }
+
+    if (g_cvSpectateDisable.BoolValue)
+        ToggleSpecEnable(true);
 }
 
 public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-    if (convar == g_cvSpectate)
+    if (convar == g_cvSpectate && g_cvSpectateDisable.BoolValue && g_cvSpectate.BoolValue)
     {
-        if(g_cvSpectate.IntValue != 0)
-		{
-			DisableSpec();
-		}
+        ToggleSpecEnable(false);
     }
 }
 
 public void Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 {
     if (GetEngineVersion() == Engine_CSGO)
-    {
         CPrintToChatAll("{green}[Knife Mode] {darkred}You can use your knife to kill Zombies!");
-    }
     else
-    {
         CPrintToChatAll("{fullred}[Knife Mode] {white}You can use your knife to kill Zombies!");
-    }
 }
 
 public void EnDamage(Event event, const char[] name, bool dontBroadcast)
 {
-	int attacker = GetClientOfUserId(GetEventInt(event, "attacker"));
-
-	if (!IsValidClient(attacker))
-		return;
-
-	if (IsPlayerAlive(attacker))
-	{
+    int attacker = GetClientOfUserId(GetEventInt(event, "attacker"));
+    
+    if (!IsValidClient(attacker))
+        return;
+        
+    if (IsPlayerAlive(attacker))
+    {
         int client = GetClientOfUserId(GetEventInt(event, "userid"));
 
         if(ZR_IsClientHuman(attacker) && ZR_IsClientZombie(client))
@@ -103,22 +133,22 @@ public void EnDamage(Event event, const char[] name, bool dontBroadcast)
 
                 if (GetEngineVersion() == Engine_CSGO)
                 {
-                    PrintHintText(client, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You have %f seconds to catch any human or you will die!</font>", GetConVarFloat(g_explodeTime), attacker);
-                    CPrintToChat(client, "{green}[Knife Mode] {gray}You have {red}%f seconds {gray}to catch any human {red}or you will die!", GetConVarFloat(g_explodeTime), attacker);
+                    PrintHintText(client, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You have %f seconds to catch any human or you will die!</font>", GetConVarFloat(g_cvExplodeTime), attacker);
+                    CPrintToChat(client, "{green}[Knife Mode] {gray}You have {red}%f seconds {gray}to catch any human {red}or you will die!", GetConVarFloat(g_cvExplodeTime), attacker);
                 }   
                 else
                 {
-                    PrintCenterText(client, "[Knife Mode] You have %f seconds to catch any human or you will die!", GetConVarFloat(g_explodeTime), attacker);
-                    CPrintToChat(client, "{green}[Knife Mode] {white}You have {red}%f seconds {white}to catch any human {red}or you will die!", GetConVarFloat(g_explodeTime), attacker);
+                    PrintCenterText(client, "[Knife Mode] You have %f seconds to catch any human or you will die!", GetConVarFloat(g_cvExplodeTime), attacker);
+                    CPrintToChat(client, "{green}[Knife Mode] {white}You have {red}%f seconds {white}to catch any human {red}or you will die!", GetConVarFloat(g_cvExplodeTime), attacker);
                  }
                  
                 Handle pack;
-                CreateDataTimer(GetConVarFloat(g_explodeTime), ByeZM, pack);
+                CreateDataTimer(GetConVarFloat(g_cvExplodeTime), ByeZM, pack);
                 WritePackCell(pack, client);
                 WritePackCell(pack, attacker);
             }
-		}
-	}
+        }
+    }
 }
 
 public Action ZR_OnClientInfect(int &client, int &attacker, bool &motherInfect, bool &respawnOverride, bool &respawn)
@@ -157,13 +187,9 @@ public Action ByeZM(Handle timer, Handle pack)
         g_ZombieExplode[client] = false;
 
         if (IsValidClient(attacker))
-        {
             DealDamage(client, 999999, attacker, DMG_GENERIC, "weapon_knife"); // enemy down ;)
-        }
         else
-        {
             ForcePlayerSuicide(client);
-        }
     }
     return Plugin_Continue;
 }
@@ -191,16 +217,16 @@ stock Action DealDamage(int nClientVictim, int nDamage, int nClientAttacker = 0,
             char sDamageType[32];
             IntToString(nDamageType, sDamageType, sizeof(sDamageType));
 
-            DispatchKeyValue(nClientVictim,			"targetname",		"war3_hurtme");
-            DispatchKeyValue(EntityPointHurt,		"DamageTarget",	"war3_hurtme");
-            DispatchKeyValue(EntityPointHurt,		"Damage",				sDamage);
+            DispatchKeyValue(nClientVictim,	        "targetname",		"war3_hurtme");
+            DispatchKeyValue(EntityPointHurt,		"DamageTarget",		"war3_hurtme");
+            DispatchKeyValue(EntityPointHurt,		"Damage",		sDamage);
             DispatchKeyValue(EntityPointHurt,		"DamageType",		sDamageType);
             if (!StrEqual(sWeapon, ""))
                 DispatchKeyValue(EntityPointHurt,	"classname",		sWeapon);
             DispatchSpawn(EntityPointHurt);
-            AcceptEntityInput(EntityPointHurt,	"Hurt",					(nClientAttacker != 0) ? nClientAttacker : -1);
+            AcceptEntityInput(EntityPointHurt,		"Hurt",			(nClientAttacker != 0) ? nClientAttacker : -1);
             DispatchKeyValue(EntityPointHurt,		"classname",		"point_hurt");
-            DispatchKeyValue(nClientVictim,			"targetname",		"war3_donthurtme");
+            DispatchKeyValue(nClientVictim,	        "targetname",		"war3_donthurtme");
 
             RemoveEdict(EntityPointHurt);
         }
@@ -208,9 +234,21 @@ stock Action DealDamage(int nClientVictim, int nDamage, int nClientAttacker = 0,
     return Plugin_Continue;
 }
 
-void DisableSpec()
+void ToggleSpecEnable(bool enable)
 {
-    g_cvSpectate.IntValue = 0;
+    if (!g_bSpectate)
+        return;
+
+    if (!g_bSpectateHooked)
+    {
+        g_cvSpectate = FindConVar("sm_spec_enable");
+        g_cvSpectate.AddChangeHook(OnConVarChanged);
+        g_bSpectateHooked = true;
+    }
+
+    g_cvSpectate.IntValue = view_as<int>(enable);
+
+    LogMessage("[KnifeMode] Changed cvar sm_spec_enable to %d.", enable);
 }
 
 bool IsValidClient(int client, bool nobots = true)
