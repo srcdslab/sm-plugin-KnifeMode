@@ -9,24 +9,21 @@
 #define WEAPONS_MAX_LENGTH 32
 #define DMG_GENERIC 0
 
-bool g_ZombieExplode[MAXPLAYERS+1] = { false, ... };
+bool    g_bSpectate = false,
+        g_bSpectateHooked = false,
+        g_ZombieExplode[MAXPLAYERS+1] = { false, ... };
 
-bool g_bSpectate = false;
-
-ConVar
-    g_cvExplodeTime
-    , g_cvSpectateDisable
-    , g_cvUnload;
-
-ConVar g_cvSpectate = null;
-bool g_bSpectateHooked = false;
+ConVar  g_cvExplodeTime, 
+        g_cvSpectateDisable, 
+        g_cvUnload,
+        g_cvSpectate = null;
 
 public Plugin myinfo =
 {
     name = "[ZR] Knife Mode",
     author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
     description = "Kill zombies with knife",
-    version = "2.6",
+    version = "2.6.1",
     url = ""
 }
 
@@ -84,7 +81,7 @@ public void OnConfigsExecuted()
 
 public void OnMapEnd()
 {
-    if (g_cvUnload.IntValue >= 1)
+    if (g_cvUnload.BoolValue)
     {
         char sFilename[256];
         GetPluginFilename(INVALID_HANDLE, sFilename, sizeof(sFilename));
@@ -129,23 +126,26 @@ public void EnDamage(Event event, const char[] name, bool dontBroadcast)
 
             if(StrEqual(weapon, "knife", false))
             {
-                g_ZombieExplode[client] = true;
+                if (!g_ZombieExplode[client])
+                {
+                    Handle pack;
+                    CreateDataTimer(GetConVarFloat(g_cvExplodeTime), ByeZM, pack);
+                    WritePackCell(pack, client);
+                    WritePackCell(pack, attacker);
 
-                if (GetEngineVersion() == Engine_CSGO)
-                {
-                    PrintHintText(client, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You have %f seconds to catch any human or you will die!</font>", GetConVarFloat(g_cvExplodeTime), attacker);
-                    CPrintToChat(client, "{green}[Knife Mode] {gray}You have {red}%f seconds {gray}to catch any human {red}or you will die!", GetConVarFloat(g_cvExplodeTime), attacker);
-                }   
-                else
-                {
-                    PrintCenterText(client, "[Knife Mode] You have %f seconds to catch any human or you will die!", GetConVarFloat(g_cvExplodeTime), attacker);
-                    CPrintToChat(client, "{green}[Knife Mode] {white}You have {red}%f seconds {white}to catch any human {red}or you will die!", GetConVarFloat(g_cvExplodeTime), attacker);
-                 }
-                 
-                Handle pack;
-                CreateDataTimer(GetConVarFloat(g_cvExplodeTime), ByeZM, pack);
-                WritePackCell(pack, client);
-                WritePackCell(pack, attacker);
+                    if (GetEngineVersion() == Engine_CSGO)
+                    {
+                        PrintHintText(client, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You have %0.1f seconds to catch any human or you will die!</font>", GetConVarFloat(g_cvExplodeTime), attacker);
+                        CPrintToChat(client, "{green}[Knife Mode] {gray}You have {red}%0.1f seconds {gray}to catch any human {red}or you will die!", GetConVarFloat(g_cvExplodeTime), attacker);
+                    }   
+                    else
+                    {
+                        PrintCenterText(client, "[Knife Mode] You have %0.1f seconds to catch any human or you will die!", GetConVarFloat(g_cvExplodeTime), attacker);
+                        CPrintToChat(client, "{green}[Knife Mode] {white}You have {red}%0.1f seconds {white}to catch any human {red}or you will die!", GetConVarFloat(g_cvExplodeTime), attacker);
+                    }
+
+                    g_ZombieExplode[client] = true;
+                }
             }
         }
     }
