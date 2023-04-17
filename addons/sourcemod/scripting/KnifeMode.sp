@@ -23,7 +23,7 @@ public Plugin myinfo =
     name = "[ZR] Knife Mode",
     author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
     description = "Kill zombies with knife",
-    version = "2.6.1",
+    version = "2.6.2",
     url = ""
 }
 
@@ -184,8 +184,6 @@ public Action ByeZM(Handle timer, Handle pack)
 
     if (IsClientInGame(client) && IsPlayerAlive(client) && ZR_IsClientZombie(client) && g_ZombieExplode[client])
     {
-        g_ZombieExplode[client] = false;
-
         if (IsValidClient(attacker))
             DealDamage(client, 999999, attacker, DMG_GENERIC, "weapon_knife"); // enemy down ;)
         else
