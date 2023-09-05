@@ -23,7 +23,7 @@ public Plugin myinfo =
     name = "[ZR] Knife Mode",
     author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
     description = "Kill zombies with knife",
-    version = "2.6.2",
+    version = "2.6.3",
     url = ""
 }
 
@@ -126,7 +126,7 @@ public void EnDamage(Event event, const char[] name, bool dontBroadcast)
 
             if(StrEqual(weapon, "knife", false))
             {
-                if (!g_ZombieExplode[client])
+                if (GetTeamAliveCount(2) > 1 && !g_ZombieExplode[client])
                 {
                     Handle pack;
                     CreateDataTimer(GetConVarFloat(g_cvExplodeTime), ByeZM, pack);
@@ -247,6 +247,20 @@ void ToggleSpecEnable(bool enable)
     g_cvSpectate.IntValue = view_as<int>(enable);
 
     LogMessage("[KnifeMode] Changed cvar sm_spec_enable to %d.", enable);
+}
+
+stock int GetTeamAliveCount(int team)
+{
+	int count = 0;
+	
+	for(int i = 1; i <= MaxClients; i++)
+	{
+		if(!IsClientInGame(i))
+			continue;
+		if(IsPlayerAlive(i) && GetClientTeam(i) == team)
+			count++;
+	}
+	return count;
 }
 
 bool IsValidClient(int client, bool nobots = true)
