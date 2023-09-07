@@ -39,7 +39,7 @@ public void OnPluginStart()
     g_cvExplodeTime = CreateConVar("sm_knifemode_time", "3", "Seconds that a zombie has to catch any human");
     g_cvUnload = CreateConVar("sm_knifemode_unload", "0", "Automaticaly unload plugin on map end [0 = No | 1 = Yes, unload it.]");
     g_cvSpectateDisable = CreateConVar("sm_knifemode_spectate_disable", "0", "Automaticaly disable the spectate plugin on map start [0 = No | 1 = Yes, disable it.]");
-    g_cvKillLastZM = CreateConVar("sm_knifemode_kill_lastzm", "0", "Allow last zombie alive to be killed by a knife ? [0 = No | 1 = Yes, kill it.]");
+    g_cvKillLastZM = CreateConVar("sm_knifemode_kill_lastzm", "1", "Allow last zombie alive to be killed by a knife ? [0 = No | 1 = Yes, kill it.]");
 
     HookEvent("player_spawn", PlayerSpawn);
     HookEvent("player_hurt", EnDamage);
@@ -189,13 +189,13 @@ public Action ByeZM(Handle timer, Handle pack)
     {
         if (GetEngineVersion() == Engine_CSGO)
         {
-            PrintHintText(client, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You are the last Zombie alive, canceling your die!</font>");
-            CPrintToChat(client, "{green}[Knife Mode] {gray}You are the last Zombie alive, canceling your die!");
+            PrintHintText(client, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You are the last Zombie alive, canceling your death!</font>");
+            CPrintToChat(client, "{green}[Knife Mode] {gray}You are the last Zombie alive, canceling your death!");
         }
         else
         {
-            PrintCenterText(client, "[Knife Mode] You are the last Zombie alive, canceling your die!");
-            CPrintToChat(client, "{green}[Knife Mode] {white}You are the last Zombie alive, canceling your die!");
+            PrintCenterText(client, "[Knife Mode] You are the last Zombie alive, canceling your death!");
+            CPrintToChat(client, "{green}[Knife Mode] {white}You are the last Zombie alive, canceling your death!");
         }
         return Plugin_Stop;
     }
