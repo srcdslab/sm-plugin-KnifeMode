@@ -16,6 +16,7 @@ bool    g_bSpectate = false,
 ConVar  g_cvExplodeTime, 
         g_cvSpectateDisable, 
         g_cvUnload,
+        g_cvKillLastZM,
         g_cvSpectate = null;
 
 public Plugin myinfo =
@@ -23,7 +24,7 @@ public Plugin myinfo =
     name = "[ZR] Knife Mode",
     author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
     description = "Kill zombies with knife",
-    version = "2.6.2",
+    version = "2.6.3",
     url = ""
 }
 
@@ -38,6 +39,7 @@ public void OnPluginStart()
     g_cvExplodeTime = CreateConVar("sm_knifemode_time", "3", "Seconds that a zombie has to catch any human");
     g_cvUnload = CreateConVar("sm_knifemode_unload", "0", "Automaticaly unload plugin on map end [0 = No | 1 = Yes, unload it.]");
     g_cvSpectateDisable = CreateConVar("sm_knifemode_spectate_disable", "0", "Automaticaly disable the spectate plugin on map start [0 = No | 1 = Yes, disable it.]");
+    g_cvKillLastZM = CreateConVar("sm_knifemode_kill_lastzm", "1", "Allow last zombie alive to be killed by a knife ? [0 = No | 1 = Yes, kill it.]");
 
     HookEvent("player_spawn", PlayerSpawn);
     HookEvent("player_hurt", EnDamage);
@@ -128,6 +130,9 @@ public void EnDamage(Event event, const char[] name, bool dontBroadcast)
             {
                 if (!g_ZombieExplode[client])
                 {
+                    if (g_cvKillLastZM.IntValue == 0 && GetTeamAliveCount(2) <= 1) // don't create useless timer
+                        return;
+
                     Handle pack;
                     CreateDataTimer(GetConVarFloat(g_cvExplodeTime), ByeZM, pack);
                     WritePackCell(pack, client);
@@ -175,12 +180,25 @@ public Action ZR_OnClientInfect(int &client, int &attacker, bool &motherInfect, 
 
 public Action ByeZM(Handle timer, Handle pack)
 {
-    int client;
-    int attacker;
-
     ResetPack(pack);
-    client = ReadPackCell(pack);
-    attacker = ReadPackCell(pack);
+    int client = ReadPackCell(pack);
+    int attacker = ReadPackCell(pack);
+
+    // Another check : In case 2 different pack is in progress for differents clients
+    if (g_cvKillLastZM.IntValue == 0 && GetTeamAliveCount(2) <= 1)
+    {
+        if (GetEngineVersion() == Engine_CSGO)
+        {
+            PrintHintText(client, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You are the last Zombie alive, canceling your death!</font>");
+            CPrintToChat(client, "{green}[Knife Mode] {gray}You are the last Zombie alive, canceling your death!");
+        }
+        else
+        {
+            PrintCenterText(client, "[Knife Mode] You are the last Zombie alive, canceling your death!");
+            CPrintToChat(client, "{green}[Knife Mode] {white}You are the last Zombie alive, canceling your death!");
+        }
+        return Plugin_Stop;
+    }
 
     if (IsClientInGame(client) && IsPlayerAlive(client) && ZR_IsClientZombie(client) && g_ZombieExplode[client])
     {
@@ -247,6 +265,20 @@ void ToggleSpecEnable(bool enable)
     g_cvSpectate.IntValue = view_as<int>(enable);
 
     LogMessage("[KnifeMode] Changed cvar sm_spec_enable to %d.", enable);
+}
+
+stock int GetTeamAliveCount(int team)
+{
+	int count = 0;
+	
+	for(int i = 1; i <= MaxClients; i++)
+	{
+		if(!IsClientInGame(i))
+			continue;
+		if(IsPlayerAlive(i) && GetClientTeam(i) == team)
+			count++;
+	}
+	return count;
 }
 
 bool IsValidClient(int client, bool nobots = true)
