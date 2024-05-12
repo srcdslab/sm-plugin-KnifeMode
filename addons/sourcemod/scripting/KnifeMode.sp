@@ -11,7 +11,10 @@
 
 bool    g_bIsCSGO = false,
 		g_bSpectate = false,
+		g_bUnload = false,
 		g_bSpectateHooked = false,
+		g_bSpectateDisable = false,
+		g_bKillLastZM = true,
 		g_ZombieExplode[MAXPLAYERS+1] = { false, ... };
 
 ConVar  g_cvExplodeTime, 
@@ -20,12 +23,14 @@ ConVar  g_cvExplodeTime,
 		g_cvKillLastZM,
 		g_cvSpectate = null;
 
+float g_fExplodeTime = 3.0;
+
 public Plugin myinfo =
 {
 	name = "[ZR] Knife Mode",
 	author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
 	description = "Kill zombies with knife",
-	version = "2.6.4",
+	version = "2.6.5",
 	url = ""
 }
 
@@ -41,8 +46,18 @@ public void OnPluginStart()
 
 	g_cvExplodeTime = CreateConVar("sm_knifemode_time", "3", "Seconds that a zombie has to catch any human");
 	g_cvUnload = CreateConVar("sm_knifemode_unload", "0", "Automaticaly unload plugin on map end [0 = No | 1 = Yes, unload it.]");
-	g_cvSpectateDisable = CreateConVar("sm_knifemode_spectate_disable", "0", "Automaticaly disable the spectate plugin on map start [0 = No | 1 = Yes, disable it.]");
+	g_cvSpectateDisable = CreateConVar("sm_knifemode_spectate_disable", "0", "Automaticaly disable the spectate command on map start [0 = No | 1 = Yes, disable it.]");
 	g_cvKillLastZM = CreateConVar("sm_knifemode_kill_lastzm", "1", "Allow last zombie alive to be killed by a knife ? [0 = No | 1 = Yes, kill it.]");
+
+	HookConVarChange(g_cvExplodeTime, OnConVarChanged);
+	HookConVarChange(g_cvUnload, OnConVarChanged);
+	HookConVarChange(g_cvSpectateDisable, OnConVarChanged);
+	HookConVarChange(g_cvKillLastZM, OnConVarChanged);
+
+	g_fExplodeTime = g_cvExplodeTime.FloatValue;
+	g_bUnload = g_cvUnload.BoolValue;
+	g_bSpectateDisable = g_cvSpectateDisable.BoolValue;
+	g_bKillLastZM = g_cvKillLastZM.BoolValue;
 
 	HookEvent("player_spawn", PlayerSpawn);
 	HookEvent("player_hurt", EnDamage);
@@ -78,16 +93,16 @@ public void OnLibraryRemoved(const char[] name)
 
 public void OnConfigsExecuted()
 {
-	if (g_cvSpectateDisable.BoolValue)
+	if (g_bSpectateDisable)
 		ToggleSpecEnable(false);
 }
 
 public void OnMapEnd()
 {
-	if (g_cvSpectateDisable.BoolValue)
+	if (g_bSpectateDisable)
 		ToggleSpecEnable(true);
 
-	if (g_cvUnload.BoolValue)
+	if (g_bUnload)
 	{
 		char sFilename[256];
 		GetPluginFilename(INVALID_HANDLE, sFilename, sizeof(sFilename));
@@ -97,7 +112,15 @@ public void OnMapEnd()
 
 public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	if (convar == g_cvSpectate && g_cvSpectateDisable.BoolValue && g_cvSpectate.BoolValue)
+	if (convar == g_cvExplodeTime)
+		g_fExplodeTime = g_cvExplodeTime.FloatValue;
+	else if (convar == g_cvUnload)
+		g_bUnload = g_cvUnload.BoolValue;
+	else if (convar == g_cvSpectateDisable)
+		g_bSpectateDisable = g_cvSpectateDisable.BoolValue;
+	else if (convar == g_cvKillLastZM)
+		g_bKillLastZM = g_cvKillLastZM.BoolValue;
+	else if (convar == g_cvSpectate && g_bSpectateDisable && g_cvSpectate.BoolValue)
 		ToggleSpecEnable(false);
 }
 
@@ -123,22 +146,20 @@ public void EnDamage(Event event, const char[] name, bool dontBroadcast)
 		char weapon[WEAPONS_MAX_LENGTH];
 		GetEventString(event, "weapon", weapon, sizeof(weapon));
 
-		if (strcmp(weapon, "knife", false) != 0 || g_ZombieExplode[client] || g_cvKillLastZM.IntValue != 0 && GetTeamAliveCount(2) != 1)
+		if (strcmp(weapon, "knife", false) != 0 || g_ZombieExplode[client] || (!g_bKillLastZM && GetTeamAliveCount(2) <= 1))
 			return;
 
-		float fExplodeTime = GetConVarFloat(g_cvExplodeTime);
-
 		Handle pack;
-		CreateDataTimer(fExplodeTime, ByeZM, pack);
+		CreateDataTimer(g_fExplodeTime, ByeZM, pack);
 		WritePackCell(pack, client);
 		WritePackCell(pack, attacker);
 
 		if (g_bIsCSGO)
-			PrintHintText(client, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You have %0.1f seconds to catch any human or you will die!</font>", fExplodeTime, attacker);
+			PrintHintText(client, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You have %0.1f seconds to catch any human or you will die!</font>", g_fExplodeTime, attacker);
 		else
-			PrintCenterText(client, "[Knife Mode] You have %0.1f seconds to catch any human or you will die!", fExplodeTime, attacker);
+			PrintCenterText(client, "[Knife Mode] You have %0.1f seconds to catch any human or you will die!", g_fExplodeTime, attacker);
 
-		CPrintToChat(client, "{green}[Knife Mode] {white}You have {red}%0.1f seconds {white}to catch any human {red}or you will die!", fExplodeTime, attacker);
+		CPrintToChat(client, "{green}[Knife Mode] {white}You have {red}%0.1f seconds {white}to catch any human {red}or you will die!", g_fExplodeTime, attacker);
 
 		g_ZombieExplode[client] = true;
 	}
@@ -167,7 +188,7 @@ public Action ByeZM(Handle timer, Handle pack)
 	int attacker = ReadPackCell(pack);
 
 	// Another check : In case 2 different pack is in progress for differents clients
-	if (g_cvKillLastZM.IntValue == 0 && GetTeamAliveCount(2) <= 1)
+	if (!g_bKillLastZM && GetTeamAliveCount(2) <= 1)
 	{
 		if (g_bIsCSGO)
 			PrintHintText(client, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You are the last Zombie alive, canceling your death!</font>");
