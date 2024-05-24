@@ -3,6 +3,7 @@
 
 #include <sourcemod>
 #include <sdktools>
+#include <cstrike>
 #include <zombiereloaded>
 #include <multicolors>
 
@@ -30,7 +31,7 @@ public Plugin myinfo =
 	name = "[ZR] Knife Mode",
 	author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
 	description = "Kill zombies with knife",
-	version = "2.6.5",
+	version = "2.6.6",
 	url = ""
 }
 
@@ -146,13 +147,13 @@ public void EnDamage(Event event, const char[] name, bool dontBroadcast)
 		char weapon[WEAPONS_MAX_LENGTH];
 		GetEventString(event, "weapon", weapon, sizeof(weapon));
 
-		if (strcmp(weapon, "knife", false) != 0 || g_ZombieExplode[client] || (!g_bKillLastZM && GetTeamAliveCount(2) <= 1))
+		if (strcmp(weapon, "knife", false) != 0 || g_ZombieExplode[client] || (!g_bKillLastZM && GetTeamAliveCount(CS_TEAM_T) <= 1))
 			return;
 
-		Handle pack;
-		CreateDataTimer(g_fExplodeTime, ByeZM, pack);
+		DataPack pack = new DataPack();
 		WritePackCell(pack, client);
 		WritePackCell(pack, attacker);
+		CreateTimer(g_fExplodeTime, ByeZM, pack, TIMER_FLAG_NO_MAPCHANGE);
 
 		if (g_bIsCSGO)
 			PrintHintText(client, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You have %0.1f seconds to catch any human or you will die!</font>", g_fExplodeTime, attacker);
@@ -181,14 +182,18 @@ public Action ZR_OnClientInfect(int &client, int &attacker, bool &motherInfect, 
 	return Plugin_Continue;
 }
 
-public Action ByeZM(Handle timer, Handle pack)
+public Action ByeZM(Handle timer, DataPack pack)
 {
 	ResetPack(pack);
 	int client = ReadPackCell(pack);
 	int attacker = ReadPackCell(pack);
+	delete pack;
+
+	if (!IsValidClient(client))
+		return Plugin_Stop;
 
 	// Another check : In case 2 different pack is in progress for differents clients
-	if (!g_bKillLastZM && GetTeamAliveCount(2) <= 1)
+	if (!g_bKillLastZM && GetTeamAliveCount(CS_TEAM_T) <= 1)
 	{
 		if (g_bIsCSGO)
 			PrintHintText(client, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You are the last Zombie alive, canceling your death!</font>");
@@ -199,14 +204,14 @@ public Action ByeZM(Handle timer, Handle pack)
 		return Plugin_Stop;
 	}
 
-	if (IsClientInGame(client) && IsPlayerAlive(client) && ZR_IsClientZombie(client) && g_ZombieExplode[client])
+	if (IsPlayerAlive(client) && ZR_IsClientZombie(client) && g_ZombieExplode[client])
 	{
 		if (IsValidClient(attacker))
 			DealDamage(client, 999999, attacker, DMG_GENERIC, "weapon_knife"); // enemy down ;)
 		else
 			ForcePlayerSuicide(client);
 	}
-	return Plugin_Continue;
+	return Plugin_Stop;
 }
 
 public void PlayerSpawn(Handle event, const char[] name, bool dontBroadcast)
