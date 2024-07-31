@@ -10,8 +10,7 @@
 #define WEAPONS_MAX_LENGTH 32
 #define DMG_GENERIC 0 // https://developer.valvesoftware.com/wiki/Damage_types
 
-bool    g_bIsCSGO = false,
-		g_bSpectate = false,
+bool    g_bSpectate = false,
 		g_bUnload = false,
 		g_bSpectateHooked = false,
 		g_bSpectateDisable = false,
@@ -31,7 +30,7 @@ public Plugin myinfo =
 	name = "[ZR] Knife Mode",
 	author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
 	description = "Kill zombies with knife",
-	version = "2.6.6",
+	version = "2.6.7",
 	url = ""
 }
 
@@ -43,8 +42,6 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart()
 {
-	g_bIsCSGO = GetEngineVersion() == Engine_CSGO;
-
 	g_cvExplodeTime = CreateConVar("sm_knifemode_time", "3", "Seconds that a zombie has to catch any human");
 	g_cvUnload = CreateConVar("sm_knifemode_unload", "0", "Automaticaly unload plugin on map end [0 = No | 1 = Yes, unload it.]");
 	g_cvSpectateDisable = CreateConVar("sm_knifemode_spectate_disable", "0", "Automaticaly disable the spectate command on map start [0 = No | 1 = Yes, disable it.]");
@@ -127,10 +124,7 @@ public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] n
 
 public void Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 {
-	if (g_bIsCSGO)
-		CPrintToChatAll("{green}[Knife Mode] {darkred}You can use your knife to kill Zombies!");
-	else
-		CPrintToChatAll("{fullred}[Knife Mode] {white}You can use your knife to kill Zombies!");
+	CPrintToChatAll("{fullred}[Knife Mode] {white}You can use your knife to kill Zombies!");
 }
 
 public void EnDamage(Event event, const char[] name, bool dontBroadcast)
@@ -155,11 +149,7 @@ public void EnDamage(Event event, const char[] name, bool dontBroadcast)
 		WritePackCell(pack, attacker);
 		CreateTimer(g_fExplodeTime, ByeZM, pack, TIMER_FLAG_NO_MAPCHANGE);
 
-		if (g_bIsCSGO)
-			PrintHintText(client, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You have %0.1f seconds to catch any human or you will die!</font>", g_fExplodeTime, attacker);
-		else
-			PrintCenterText(client, "[Knife Mode] You have %0.1f seconds to catch any human or you will die!", g_fExplodeTime, attacker);
-
+		PrintCenterText(client, "[Knife Mode] You have %0.1f seconds to catch any human or you will die!", g_fExplodeTime, attacker);
 		CPrintToChat(client, "{green}[Knife Mode] {white}You have {red}%0.1f seconds {white}to catch any human {red}or you will die!", g_fExplodeTime, attacker);
 
 		g_ZombieExplode[client] = true;
@@ -173,11 +163,7 @@ public Action ZR_OnClientInfect(int &client, int &attacker, bool &motherInfect, 
 
 	g_ZombieExplode[attacker] = false;
 
-	if (g_bIsCSGO)
-		PrintHintText(attacker, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You have caught a human, you are saved!</font>");
-	else
-		PrintCenterText(attacker, "[Knife Mode] You have caught a human, you are saved!");
-
+	PrintCenterText(attacker, "[Knife Mode] You have caught a human, you are saved!");
 	CPrintToChat(attacker, "{green}[Knife Mode] {white}You have caught a human, you are saved!");
 	return Plugin_Continue;
 }
@@ -195,11 +181,7 @@ public Action ByeZM(Handle timer, DataPack pack)
 	// Another check : In case 2 different pack is in progress for differents clients
 	if (!g_bKillLastZM && GetTeamAliveCount(CS_TEAM_T) <= 1)
 	{
-		if (g_bIsCSGO)
-			PrintHintText(client, "<font class='fontSize-l' color='#00ff00'>[Knife Mode]</font> <font class='fontSize-l'>You are the last Zombie alive, canceling your death!</font>");
-		else
-			PrintCenterText(client, "[Knife Mode] You are the last Zombie alive, canceling your death!");
-
+		PrintCenterText(client, "[Knife Mode] You are the last Zombie alive, canceling your death!");
 		CPrintToChat(client, "{green}[Knife Mode] {white}You are the last Zombie alive, canceling your death!");
 		return Plugin_Stop;
 	}
@@ -280,7 +262,7 @@ stock int GetTeamAliveCount(int team)
 	return count;
 }
 
-bool IsValidClient(int client, bool nobots = true)
+bool IsValidClient(int client, bool nobots = false)
 {
 	if (client <= 0 || client > MaxClients || !IsClientConnected(client) || (nobots && IsFakeClient(client)))
 		return false;
