@@ -15,13 +15,15 @@ bool    g_bSpectate = false,
 		g_bSpectateHooked = false,
 		g_bSpectateDisable = false,
 		g_bKillLastZM = true,
+		g_bTeamKill = false,
 		g_ZombieExplode[MAXPLAYERS+1] = { false, ... };
 
 ConVar  g_cvExplodeTime, 
 		g_cvSpectateDisable, 
 		g_cvUnload,
 		g_cvKillLastZM,
-		g_cvSpectate = null;
+		g_cvSpectate,
+		g_cvTeamKill;
 
 float g_fExplodeTime = 3.0;
 
@@ -30,7 +32,7 @@ public Plugin myinfo =
 	name = "[ZR] Knife Mode",
 	author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
 	description = "Kill zombies with knife",
-	version = "2.6.7",
+	version = "2.7.0",
 	url = ""
 }
 
@@ -42,20 +44,23 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart()
 {
-	g_cvExplodeTime = CreateConVar("sm_knifemode_time", "3", "Seconds that a zombie has to catch any human");
-	g_cvUnload = CreateConVar("sm_knifemode_unload", "0", "Automaticaly unload plugin on map end [0 = No | 1 = Yes, unload it.]");
-	g_cvSpectateDisable = CreateConVar("sm_knifemode_spectate_disable", "0", "Automaticaly disable the spectate command on map start [0 = No | 1 = Yes, disable it.]");
-	g_cvKillLastZM = CreateConVar("sm_knifemode_kill_lastzm", "1", "Allow last zombie alive to be killed by a knife ? [0 = No | 1 = Yes, kill it.]");
+	g_cvExplodeTime = CreateConVar("sm_knifemode_time", "3", "Seconds that a zombie has to catch any human (60s max)", _, true, 0.1, true, 60.0);
+	g_cvUnload = CreateConVar("sm_knifemode_unload", "0", "Automaticaly unload plugin on map end [0 = No | 1 = Yes, unload it.]", _, true, 0.0, true, 1.0);
+	g_cvSpectateDisable = CreateConVar("sm_knifemode_spectate_disable", "0", "Automaticaly disable the spectate command on map start [0 = No | 1 = Yes, disable it.]", _, true, 0.0, true, 1.0);
+	g_cvKillLastZM = CreateConVar("sm_knifemode_kill_lastzm", "1", "Allow last zombie alive to be killed by a knife ? [0 = No | 1 = Yes, kill it.]", _, true, 0.0, true, 1.0);
+	g_cvTeamKill = CreateConVar("sm_knifemode_allow_teamkill", "0", "Allow knifed zombie to be killed if attacker has become zombie [0 = No | 1 = Yes, allow it.]", _, true, 0.0, true, 1.0);
 
 	HookConVarChange(g_cvExplodeTime, OnConVarChanged);
 	HookConVarChange(g_cvUnload, OnConVarChanged);
 	HookConVarChange(g_cvSpectateDisable, OnConVarChanged);
 	HookConVarChange(g_cvKillLastZM, OnConVarChanged);
+	HookConVarChange(g_cvTeamKill, OnConVarChanged);
 
 	g_fExplodeTime = g_cvExplodeTime.FloatValue;
 	g_bUnload = g_cvUnload.BoolValue;
 	g_bSpectateDisable = g_cvSpectateDisable.BoolValue;
 	g_bKillLastZM = g_cvKillLastZM.BoolValue;
+	g_bTeamKill = g_cvTeamKill.BoolValue;
 
 	HookEvent("player_spawn", PlayerSpawn);
 	HookEvent("player_hurt", EnDamage);
@@ -118,6 +123,8 @@ public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] n
 		g_bSpectateDisable = g_cvSpectateDisable.BoolValue;
 	else if (convar == g_cvKillLastZM)
 		g_bKillLastZM = g_cvKillLastZM.BoolValue;
+	else if (convar == g_cvTeamKill)
+		g_bTeamKill = g_cvTeamKill.BoolValue;
 	else if (convar == g_cvSpectate && g_bSpectateDisable && g_cvSpectate.BoolValue)
 		ToggleSpecEnable(false);
 }
@@ -183,6 +190,12 @@ public Action ByeZM(Handle timer, DataPack pack)
 	{
 		PrintCenterText(client, "[Knife Mode] You are the last Zombie alive, canceling your death!");
 		CPrintToChat(client, "{green}[Knife Mode] {white}You are the last Zombie alive, canceling your death!");
+		return Plugin_Stop;
+	}
+	else if (!g_bTeamKill && (!IsValidClient(attacker) || !IsPlayerAlive(attacker) || GetClientTeam(attacker) != CS_TEAM_CT))
+	{
+		PrintCenterText(client, "[Knife Mode] Youre attacker is longer human, you are saved!");
+		CPrintToChat(client, "{green}[Knife Mode] {white}Youre attacker is longer human, you are saved!");
 		return Plugin_Stop;
 	}
 
