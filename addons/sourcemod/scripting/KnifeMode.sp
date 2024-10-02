@@ -48,7 +48,7 @@ public void OnPluginStart()
 	g_cvUnload = CreateConVar("sm_knifemode_unload", "0", "Automaticaly unload plugin on map end [0 = No | 1 = Yes, unload it.]", _, true, 0.0, true, 1.0);
 	g_cvSpectateDisable = CreateConVar("sm_knifemode_spectate_disable", "0", "Automaticaly disable the spectate command on map start [0 = No | 1 = Yes, disable it.]", _, true, 0.0, true, 1.0);
 	g_cvKillLastZM = CreateConVar("sm_knifemode_kill_lastzm", "1", "Allow last zombie alive to be killed by a knife ? [0 = No | 1 = Yes, kill it.]", _, true, 0.0, true, 1.0);
-	g_cvTeamKill = CreateConVar("sm_knifemode_allow_teamkill", "0", "Allow knifed zombie to be killed if attacker has become zombie [0 = No | 1 = Yes, allow it.]", _, true, 0.0, true, 1.0);
+	g_cvTeamKill = CreateConVar("sm_knifemode_allow_teamkill", "1", "Allow knifed zombie to be killed if attacker has become zombie [0 = No | 1 = Yes, allow it.]", _, true, 0.0, true, 1.0);
 
 	HookConVarChange(g_cvExplodeTime, OnConVarChanged);
 	HookConVarChange(g_cvUnload, OnConVarChanged);
@@ -192,10 +192,10 @@ public Action ByeZM(Handle timer, DataPack pack)
 		CPrintToChat(client, "{green}[Knife Mode] {white}You are the last Zombie alive, canceling your death!");
 		return Plugin_Stop;
 	}
-	else if (!g_bTeamKill && (!IsValidClient(attacker) || !IsPlayerAlive(attacker) || GetClientTeam(attacker) != CS_TEAM_CT))
+	else if (!g_bTeamKill && (!IsValidClient(attacker) || !IsPlayerAlive(attacker) || ZR_IsClientZombie(attacker)))
 	{
-		PrintCenterText(client, "[Knife Mode] Youre attacker is longer human, you are saved!");
-		CPrintToChat(client, "{green}[Knife Mode] {white}Youre attacker is longer human, you are saved!");
+		PrintCenterText(client, "[Knife Mode] Attacker is no longer human, you are saved!");
+		CPrintToChat(client, "{green}[Knife Mode] {white}Attacker is no longer human, you are saved!");
 		return Plugin_Stop;
 	}
 
