@@ -16,55 +16,66 @@ bool    g_bSpectate = false,
 		g_bSpectateDisable = false,
 		g_bKillLastZM = true,
 		g_bTeamKill = false,
-		g_ZombieExplode[MAXPLAYERS+1] = { false, ... };
+		g_ZombieExplode[MAXPLAYERS+1] = { false, ... },
+		g_bEnabled = true;
 
 ConVar  g_cvExplodeTime, 
 		g_cvSpectateDisable, 
 		g_cvUnload,
 		g_cvKillLastZM,
 		g_cvSpectate,
-		g_cvTeamKill;
+		g_cvTeamKill,
+		g_cvEnabled;
 
 float g_fExplodeTime = 3.0;
+Handle g_fwdOnToggle;
 
 public Plugin myinfo =
 {
 	name = "[ZR] Knife Mode",
 	author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
 	description = "Kill zombies with knife",
-	version = "2.7.0",
+	version = "2.7.1",
 	url = ""
 }
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
 	RegPluginLibrary("KnifeMode");
+	g_fwdOnToggle = CreateGlobalForward("KnifeMode_OnToggle", ET_Ignore, Param_Cell);
 	return APLRes_Success;
 }
 
 public void OnPluginStart()
 {
+	g_cvEnabled = CreateConVar("sm_knifemode_enabled", "1", "Enable or disable Knife Mode [0 = Off | 1 = On]", _, true, 0.0, true, 1.0);
 	g_cvExplodeTime = CreateConVar("sm_knifemode_time", "3", "Seconds that a zombie has to catch any human (60s max)", _, true, 0.1, true, 60.0);
-	g_cvUnload = CreateConVar("sm_knifemode_unload", "0", "Automaticaly unload plugin on map end [0 = No | 1 = Yes, unload it.]", _, true, 0.0, true, 1.0);
+	g_cvUnload = CreateConVar("sm_knifemode_unload", "0", "Automaticaly disable knifemode on map end [0 = No | 1 = Yes, disable it.]", _, true, 0.0, true, 1.0);
 	g_cvSpectateDisable = CreateConVar("sm_knifemode_spectate_disable", "0", "Automaticaly disable the spectate command on map start [0 = No | 1 = Yes, disable it.]", _, true, 0.0, true, 1.0);
 	g_cvKillLastZM = CreateConVar("sm_knifemode_kill_lastzm", "1", "Allow last zombie alive to be killed by a knife ? [0 = No | 1 = Yes, kill it.]", _, true, 0.0, true, 1.0);
 	g_cvTeamKill = CreateConVar("sm_knifemode_allow_teamkill", "1", "Allow knifed zombie to be killed if attacker has become zombie [0 = No | 1 = Yes, allow it.]", _, true, 0.0, true, 1.0);
 
+
+	HookConVarChange(g_cvEnabled, OnConVarChanged);
 	HookConVarChange(g_cvExplodeTime, OnConVarChanged);
 	HookConVarChange(g_cvUnload, OnConVarChanged);
 	HookConVarChange(g_cvSpectateDisable, OnConVarChanged);
 	HookConVarChange(g_cvKillLastZM, OnConVarChanged);
 	HookConVarChange(g_cvTeamKill, OnConVarChanged);
 
+	g_bEnabled = g_cvEnabled.BoolValue;
 	g_fExplodeTime = g_cvExplodeTime.FloatValue;
 	g_bUnload = g_cvUnload.BoolValue;
 	g_bSpectateDisable = g_cvSpectateDisable.BoolValue;
 	g_bKillLastZM = g_cvKillLastZM.BoolValue;
 	g_bTeamKill = g_cvTeamKill.BoolValue;
 
-	HookEvent("player_spawn", PlayerSpawn);
-	HookEvent("player_hurt", EnDamage);
-	HookEvent("round_start", Event_RoundStart);
+	if (g_bEnabled)
+	{
+		HookEvent("player_spawn", PlayerSpawn);
+		HookEvent("player_hurt", EnDamage);
+		HookEvent("round_start", Event_RoundStart);
+	}
 
 	AutoExecConfig(true);
 }
@@ -107,15 +118,17 @@ public void OnMapEnd()
 
 	if (g_bUnload)
 	{
-		char sFilename[256];
-		GetPluginFilename(INVALID_HANDLE, sFilename, sizeof(sFilename));
-		ServerCommand("sm plugins unload %s", sFilename);
+		g_cvEnabled.SetInt(0);
+		LogMessage("[KnifeMode] Disabling Knife Mode (setting enabled cvar to 0)...");
 	}
 }
 
 public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-	if (convar == g_cvExplodeTime)
+
+	if (convar == g_cvEnabled)
+		EnableKnifeMode(g_cvEnabled.BoolValue);
+	else if (convar == g_cvExplodeTime)
 		g_fExplodeTime = g_cvExplodeTime.FloatValue;
 	else if (convar == g_cvUnload)
 		g_bUnload = g_cvUnload.BoolValue;
@@ -131,11 +144,17 @@ public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] n
 
 public void Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 {
+	if (!g_bEnabled)
+		return;
+
 	CPrintToChatAll("{fullred}[Knife Mode] {white}You can use your knife to kill Zombies!");
 }
 
 public void EnDamage(Event event, const char[] name, bool dontBroadcast)
 {
+	if (!g_bEnabled)
+		return;
+
 	int attacker = GetClientOfUserId(GetEventInt(event, "attacker"));
 	
 	if (!IsValidClient(attacker) || !IsPlayerAlive(attacker))
@@ -165,6 +184,9 @@ public void EnDamage(Event event, const char[] name, bool dontBroadcast)
 
 public Action ZR_OnClientInfect(int &client, int &attacker, bool &motherInfect, bool &respawnOverride, bool &respawn)
 {
+	if (!g_bEnabled)
+		return Plugin_Continue;
+
 	if (!IsValidClient(attacker) || !g_ZombieExplode[attacker])
 		return Plugin_Continue;
 
@@ -177,6 +199,12 @@ public Action ZR_OnClientInfect(int &client, int &attacker, bool &motherInfect, 
 
 public Action ByeZM(Handle timer, DataPack pack)
 {
+	if (!g_bEnabled)
+	{
+		delete pack;
+		return Plugin_Stop;
+	}
+
 	ResetPack(pack);
 	int client = ReadPackCell(pack);
 	int attacker = ReadPackCell(pack);
@@ -211,6 +239,9 @@ public Action ByeZM(Handle timer, DataPack pack)
 
 public void PlayerSpawn(Handle event, const char[] name, bool dontBroadcast)
 {
+	if (!g_bEnabled)
+		return;
+
 	int client = GetClientOfUserId(GetEventInt(event, "userid"));
 	g_ZombieExplode[client] = false;
 }
@@ -281,4 +312,30 @@ bool IsValidClient(int client, bool nobots = false)
 		return false;
 
 	return IsClientInGame(client);
+}
+
+void EnableKnifeMode(bool enable)
+{
+	if (enable && !g_bEnabled)
+	{
+		HookEvent("player_spawn", PlayerSpawn);
+		HookEvent("player_hurt", EnDamage);
+		HookEvent("round_start", Event_RoundStart);
+		LogMessage("[KnifeMode] Knife Mode enabled.");
+	}
+	else if (!enable && g_bEnabled)
+	{
+		UnhookEvent("player_spawn", PlayerSpawn);
+		UnhookEvent("player_hurt", EnDamage);
+		UnhookEvent("round_start", Event_RoundStart);
+		LogMessage("[KnifeMode] Knife Mode disabled.");
+	}
+	g_bEnabled = enable;
+
+	if (g_fwdOnToggle != null)
+	{
+		Call_StartForward(g_fwdOnToggle);
+		Call_PushCell(g_bEnabled);
+		Call_Finish();
+	}
 }
