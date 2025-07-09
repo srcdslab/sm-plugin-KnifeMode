@@ -111,10 +111,7 @@ public void OnMapEnd()
 	UnHookSpectate();
 
 	if (g_bUnload && g_cvEnabled.BoolValue == true)
-	{
-		g_cvEnabled.SetInt(0);
-		LogMessage("[KnifeMode] Disabling Knife Mode (setting enabled cvar to 0)...");
-	}
+		EnableKnifeMode(false);
 }
 
 public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
