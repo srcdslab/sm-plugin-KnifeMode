@@ -94,15 +94,7 @@ public void OnLibraryAdded(const char[] name)
 public void OnLibraryRemoved(const char[] name)
 {
 	if (strcmp(name, "Spectate", false) == 0)
-	{
-		g_bSpectate = false;
-		if (g_bSpectateHooked)
-		{
-			g_cvSpectate.RemoveChangeHook(OnConVarChanged);
-			g_cvSpectate = null;
-			g_bSpectateHooked = false;
-		}
-	}
+		UnHookSpectate();
 }
 
 public void OnConfigsExecuted()
@@ -116,7 +108,9 @@ public void OnMapEnd()
 	if (g_bSpectateDisable)
 		ToggleSpecEnable(true);
 
-	if (g_bUnload)
+	UnHookSpectate();
+
+	if (g_bUnload && g_cvEnabled.BoolValue == true)
 	{
 		g_cvEnabled.SetInt(0);
 		LogMessage("[KnifeMode] Disabling Knife Mode (setting enabled cvar to 0)...");
@@ -278,6 +272,9 @@ stock Action DealDamage(int nClientVictim, int nDamage, int nClientAttacker = 0,
 
 void ToggleSpecEnable(bool enable)
 {
+	if (!g_bEnabled)
+		return;
+
 	if (!g_bSpectate)
 		return;
 
@@ -337,5 +334,16 @@ void EnableKnifeMode(bool enable)
 		Call_StartForward(g_fwdOnToggle);
 		Call_PushCell(g_bEnabled);
 		Call_Finish();
+	}
+}
+
+stock void UnHookSpectate()
+{
+	g_bSpectate = false;
+	if (g_bSpectateHooked)
+	{
+		g_cvSpectate.RemoveChangeHook(OnConVarChanged);
+		g_cvSpectate = null;
+		g_bSpectateHooked = false;
 	}
 }
