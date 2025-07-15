@@ -35,7 +35,7 @@ public Plugin myinfo =
 	name = "[ZR] Knife Mode",
 	author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
 	description = "Kill zombies with knife",
-	version = "2.7.1",
+	version = "2.7.2",
 	url = ""
 }
 
@@ -173,19 +173,18 @@ public void EnDamage(Event event, const char[] name, bool dontBroadcast)
 	}
 }
 
-public Action ZR_OnClientInfect(int &client, int &attacker, bool &motherInfect, bool &respawnOverride, bool &respawn)
+public void ZR_OnClientInfected(int client, int attacker, bool motherInfect, bool respawnOverride, bool respawn)
 {
 	if (!g_bEnabled)
-		return Plugin_Continue;
+		return;
 
 	if (!IsValidClient(attacker) || !g_ZombieExplode[attacker])
-		return Plugin_Continue;
+		return;
 
 	g_ZombieExplode[attacker] = false;
 
 	PrintCenterText(attacker, "[Knife Mode] You have caught a human, you are saved!");
 	CPrintToChat(attacker, "{green}[Knife Mode] {white}You have caught a human, you are saved!");
-	return Plugin_Continue;
 }
 
 public Action ByeZM(Handle timer, DataPack pack)
