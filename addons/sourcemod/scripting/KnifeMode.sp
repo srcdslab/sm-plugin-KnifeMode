@@ -185,7 +185,6 @@ public void ZR_OnClientInfected(int client, int attacker, bool motherInfect, boo
 
 	PrintCenterText(attacker, "[Knife Mode] You have caught a human, you are saved!");
 	CPrintToChat(attacker, "{green}[Knife Mode] {white}You have caught a human, you are saved!");
-	return;
 }
 
 public Action ByeZM(Handle timer, DataPack pack)
