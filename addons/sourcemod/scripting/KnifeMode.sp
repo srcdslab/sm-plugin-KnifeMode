@@ -35,7 +35,7 @@ public Plugin myinfo =
 	name = "[ZR] Knife Mode",
 	author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
 	description = "Kill zombies with knife",
-	version = "2.7.2",
+	version = "2.7.3",
 	url = ""
 }
 
@@ -83,6 +83,7 @@ public void OnPluginStart()
 public void OnAllPluginsLoaded()
 {
 	g_bSpectate = LibraryExists("Spectate");
+	SendForward();
 }
 
 public void OnLibraryAdded(const char[] name)
@@ -116,7 +117,6 @@ public void OnMapEnd()
 
 public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
-
 	if (convar == g_cvEnabled)
 		EnableKnifeMode(g_cvEnabled.BoolValue);
 	else if (convar == g_cvExplodeTime)
@@ -325,12 +325,7 @@ void EnableKnifeMode(bool enable)
 	}
 	g_bEnabled = enable;
 
-	if (g_fwdOnToggle != null)
-	{
-		Call_StartForward(g_fwdOnToggle);
-		Call_PushCell(g_bEnabled);
-		Call_Finish();
-	}
+	SendForward();
 }
 
 stock void UnHookSpectate()
@@ -342,4 +337,14 @@ stock void UnHookSpectate()
 		g_cvSpectate = null;
 		g_bSpectateHooked = false;
 	}
+}
+
+stock void SendForward()
+{
+	if (g_fwdOnToggle == null)
+		return;
+
+	Call_StartForward(g_fwdOnToggle);
+	Call_PushCell(g_bEnabled);
+	Call_Finish();
 }
