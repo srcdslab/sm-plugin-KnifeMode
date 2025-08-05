@@ -35,7 +35,7 @@ public Plugin myinfo =
 	name = "[ZR] Knife Mode",
 	author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
 	description = "Kill zombies with knife",
-	version = "2.7.3",
+	version = "2.7.4",
 	url = ""
 }
 
@@ -146,24 +146,26 @@ public void EnDamage(Event event, const char[] name, bool dontBroadcast)
 	if (!g_bEnabled)
 		return;
 
-	int attacker = GetClientOfUserId(GetEventInt(event, "attacker"));
+	int attackerid = event.GetInt("attacker");
+	int attacker = GetClientOfUserId(attackerid);
 	
 	if (!IsValidClient(attacker) || !IsPlayerAlive(attacker))
 		return;
-		
-	int client = GetClientOfUserId(GetEventInt(event, "userid"));
+	
+	int clientid = event.GetInt("userid");
+	int client = GetClientOfUserId(clientid);
 
 	if (ZR_IsClientHuman(attacker) && ZR_IsClientZombie(client))
 	{
 		char weapon[WEAPONS_MAX_LENGTH];
-		GetEventString(event, "weapon", weapon, sizeof(weapon));
+		event.GetString("weapon", weapon, sizeof(weapon));
 
 		if (strcmp(weapon, "knife", false) != 0 || g_ZombieExplode[client] || (!g_bKillLastZM && GetTeamAliveCount(CS_TEAM_T) <= 1))
 			return;
 
 		DataPack pack = new DataPack();
-		WritePackCell(pack, client);
-		WritePackCell(pack, attacker);
+		pack.WriteCell(clientid);
+		pack.WriteCell(attackerid);
 		CreateTimer(g_fExplodeTime, ByeZM, pack, TIMER_FLAG_NO_MAPCHANGE);
 
 		PrintCenterText(client, "[Knife Mode] You have %0.1f seconds to catch any human or you will die!", g_fExplodeTime, attacker);
@@ -195,13 +197,20 @@ public Action ByeZM(Handle timer, DataPack pack)
 		return Plugin_Stop;
 	}
 
-	ResetPack(pack);
-	int client = ReadPackCell(pack);
-	int attacker = ReadPackCell(pack);
+	pack.Reset();
+	int client = GetClientOfUserId(pack.ReadCell());
+	int attacker = GetClientOfUserId(pack.ReadCell());
 	delete pack;
 
 	if (!IsValidClient(client))
 		return Plugin_Stop;
+
+	if (!attacker)
+	{
+		PrintCenterText(client, "[Knife Mode] Attacker left the game, you are saved!");
+		CPrintToChat(client, "{green}[Knife Mode] {white}Attacker left the game, you are saved!");
+		return Plugin_Stop;
+	}
 
 	// Another check : In case 2 different pack is in progress for differents clients
 	if (!g_bKillLastZM && GetTeamAliveCount(CS_TEAM_T) <= 1)
