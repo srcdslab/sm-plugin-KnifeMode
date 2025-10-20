@@ -205,6 +205,8 @@ public Action ByeZM(Handle timer, DataPack pack)
 	if (!IsValidClient(client))
 		return Plugin_Stop;
 
+	g_ZombieExplode[client] = false;
+	
 	if (!attacker)
 	{
 		PrintCenterText(client, "[Knife Mode] Attacker left the game, you are saved!");
