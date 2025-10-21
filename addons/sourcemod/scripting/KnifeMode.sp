@@ -205,6 +205,9 @@ public Action ByeZM(Handle timer, DataPack pack)
 	if (!IsValidClient(client))
 		return Plugin_Stop;
 
+	if (!g_ZombieExplode[client])
+		return Plugin_Stop;
+		
 	g_ZombieExplode[client] = false;
 
 	if (!attacker)
@@ -228,7 +231,7 @@ public Action ByeZM(Handle timer, DataPack pack)
 		return Plugin_Stop;
 	}
 
-	if (IsPlayerAlive(client) && ZR_IsClientZombie(client) && g_ZombieExplode[client])
+	if (IsPlayerAlive(client) && ZR_IsClientZombie(client))
 	{
 		if (IsValidClient(attacker))
 			DealDamage(client, 999999, attacker, DMG_GENERIC, "weapon_knife"); // enemy down ;)
