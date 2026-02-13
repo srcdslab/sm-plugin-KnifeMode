@@ -35,7 +35,7 @@ public Plugin myinfo =
 	name = "[ZR] Knife Mode",
 	author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
 	description = "Kill zombies with knife",
-	version = "2.7.5",
+	version = "2.7.6",
 	url = ""
 }
 
@@ -207,7 +207,7 @@ public Action ByeZM(Handle timer, DataPack pack)
 
 	if (!g_ZombieExplode[client])
 		return Plugin_Stop;
-		
+
 	g_ZombieExplode[client] = false;
 
 	if (!attacker)
