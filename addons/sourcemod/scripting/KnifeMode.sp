@@ -3,12 +3,12 @@
 
 #include <sourcemod>
 #include <sdktools>
+#include <sdkhooks>
 #include <cstrike>
 #include <zombiereloaded>
 #include <multicolors>
 
 #define WEAPONS_MAX_LENGTH 32
-#define DMG_GENERIC 0 // https://developer.valvesoftware.com/wiki/Damage_types
 
 bool    g_bSpectate = false,
 		g_bUnload = false,
@@ -28,21 +28,21 @@ ConVar  g_cvExplodeTime,
 		g_cvEnabled;
 
 float g_fExplodeTime = 3.0;
-Handle g_fwdOnToggle;
+GlobalForward g_fwdOnToggle;
 
 public Plugin myinfo =
 {
 	name = "[ZR] Knife Mode",
 	author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
 	description = "Kill zombies with knife",
-	version = "2.7.6",
+	version = "2.7.7",
 	url = ""
 }
 
 public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max)
 {
 	RegPluginLibrary("KnifeMode");
-	g_fwdOnToggle = CreateGlobalForward("KnifeMode_OnToggle", ET_Ignore, Param_Cell);
+	g_fwdOnToggle = new GlobalForward("KnifeMode_OnToggle", ET_Ignore, Param_Cell);
 	return APLRes_Success;
 }
 
@@ -56,12 +56,12 @@ public void OnPluginStart()
 	g_cvTeamKill = CreateConVar("sm_knifemode_allow_teamkill", "1", "Allow knifed zombie to be killed if attacker has become zombie [0 = No | 1 = Yes, allow it.]", _, true, 0.0, true, 1.0);
 
 
-	HookConVarChange(g_cvEnabled, OnConVarChanged);
-	HookConVarChange(g_cvExplodeTime, OnConVarChanged);
-	HookConVarChange(g_cvUnload, OnConVarChanged);
-	HookConVarChange(g_cvSpectateDisable, OnConVarChanged);
-	HookConVarChange(g_cvKillLastZM, OnConVarChanged);
-	HookConVarChange(g_cvTeamKill, OnConVarChanged);
+	g_cvEnabled.AddChangeHook(OnConVarChanged);
+	g_cvExplodeTime.AddChangeHook(OnConVarChanged);
+	g_cvUnload.AddChangeHook(OnConVarChanged);
+	g_cvSpectateDisable.AddChangeHook(OnConVarChanged);
+	g_cvKillLastZM.AddChangeHook(OnConVarChanged);
+	g_cvTeamKill.AddChangeHook(OnConVarChanged);
 
 	g_bEnabled = g_cvEnabled.BoolValue;
 	g_fExplodeTime = g_cvExplodeTime.FloatValue;
@@ -72,8 +72,8 @@ public void OnPluginStart()
 
 	if (g_bEnabled)
 	{
-		HookEvent("player_spawn", PlayerSpawn);
-		HookEvent("player_hurt", EnDamage);
+		HookEvent("player_spawn", Event_PlayerSpawn);
+		HookEvent("player_hurt", Event_PlayerHurt);
 		HookEvent("round_start", Event_RoundStart);
 	}
 
@@ -112,13 +112,13 @@ public void OnMapEnd()
 	UnHookSpectate();
 
 	if (g_bUnload && g_cvEnabled.BoolValue == true)
-		EnableKnifeMode(false);
+		ToggleKnifeMode(false);
 }
 
 public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
 {
 	if (convar == g_cvEnabled)
-		EnableKnifeMode(g_cvEnabled.BoolValue);
+		ToggleKnifeMode(g_cvEnabled.BoolValue);
 	else if (convar == g_cvExplodeTime)
 		g_fExplodeTime = g_cvExplodeTime.FloatValue;
 	else if (convar == g_cvUnload)
@@ -133,7 +133,7 @@ public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] n
 		ToggleSpecEnable(false);
 }
 
-public void Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
+void Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 {
 	if (!g_bEnabled)
 		return;
@@ -141,7 +141,7 @@ public void Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 	CPrintToChatAll("{fullred}[Knife Mode] {white}You can use your knife to kill Zombies!");
 }
 
-public void EnDamage(Event event, const char[] name, bool dontBroadcast)
+void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 {
 	if (!g_bEnabled)
 		return;
@@ -149,30 +149,30 @@ public void EnDamage(Event event, const char[] name, bool dontBroadcast)
 	int attackerid = event.GetInt("attacker");
 	int attacker = GetClientOfUserId(attackerid);
 	
-	if (!IsValidClient(attacker) || !IsPlayerAlive(attacker))
+	if (!attacker || !IsPlayerAlive(attacker) || ZR_IsClientZombie(attacker))
 		return;
 	
 	int clientid = event.GetInt("userid");
 	int client = GetClientOfUserId(clientid);
 
-	if (ZR_IsClientHuman(attacker) && ZR_IsClientZombie(client))
-	{
-		char weapon[WEAPONS_MAX_LENGTH];
-		event.GetString("weapon", weapon, sizeof(weapon));
+	if (!client || !IsPlayerAlive(client) || !ZR_IsClientZombie(client))
+		return;
 
-		if (strcmp(weapon, "knife", false) != 0 || g_ZombieExplode[client] || (!g_bKillLastZM && GetTeamAliveCount(CS_TEAM_T) <= 1))
-			return;
+	char weapon[WEAPONS_MAX_LENGTH];
+	event.GetString("weapon", weapon, sizeof(weapon));
 
-		DataPack pack = new DataPack();
-		pack.WriteCell(clientid);
-		pack.WriteCell(attackerid);
-		CreateTimer(g_fExplodeTime, ByeZM, pack, TIMER_FLAG_NO_MAPCHANGE);
+	if (strcmp(weapon, "knife", false) != 0 || g_ZombieExplode[client] || (!g_bKillLastZM && GetTeamAliveCount(CS_TEAM_T) <= 1))
+		return;
 
-		PrintCenterText(client, "[Knife Mode] You have %0.1f seconds to catch any human or you will die!", g_fExplodeTime, attacker);
-		CPrintToChat(client, "{green}[Knife Mode] {white}You have {red}%0.1f seconds {white}to catch any human {red}or you will die!", g_fExplodeTime, attacker);
+	DataPack pack = new DataPack();
+	pack.WriteCell(clientid);
+	pack.WriteCell(attackerid);
+	CreateTimer(g_fExplodeTime, ByeZM, pack, TIMER_FLAG_NO_MAPCHANGE);
 
-		g_ZombieExplode[client] = true;
-	}
+	PrintCenterText(client, "[Knife Mode] You have %0.1f seconds to catch any human or you will die!", g_fExplodeTime, attacker);
+	CPrintToChat(client, "{green}[Knife Mode] {white}You have {red}%0.1f seconds {white}to catch any human {red}or you will die!", g_fExplodeTime, attacker);
+
+	g_ZombieExplode[client] = true;
 }
 
 public void ZR_OnClientInfected(int client, int attacker, bool motherInfect, bool respawnOverride, bool respawn)
@@ -180,7 +180,7 @@ public void ZR_OnClientInfected(int client, int attacker, bool motherInfect, boo
 	if (!g_bEnabled)
 		return;
 
-	if (!IsValidClient(attacker) || !g_ZombieExplode[attacker])
+	if (!g_ZombieExplode[attacker])
 		return;
 
 	g_ZombieExplode[attacker] = false;
@@ -199,11 +199,15 @@ public Action ByeZM(Handle timer, DataPack pack)
 
 	pack.Reset();
 	int client = GetClientOfUserId(pack.ReadCell());
+
+	if (!client)
+	{
+		delete pack;
+		return Plugin_Stop;
+	}
+
 	int attacker = GetClientOfUserId(pack.ReadCell());
 	delete pack;
-
-	if (!IsValidClient(client))
-		return Plugin_Stop;
 
 	if (!g_ZombieExplode[client])
 		return Plugin_Stop;
@@ -224,7 +228,7 @@ public Action ByeZM(Handle timer, DataPack pack)
 		CPrintToChat(client, "{green}[Knife Mode] {white}You are the last Zombie alive, canceling your death!");
 		return Plugin_Stop;
 	}
-	else if (!g_bTeamKill && (!IsValidClient(attacker) || !IsPlayerAlive(attacker) || ZR_IsClientZombie(attacker)))
+	else if (!g_bTeamKill && (!IsPlayerAlive(attacker) || ZR_IsClientZombie(attacker)))
 	{
 		PrintCenterText(client, "[Knife Mode] Attacker is no longer human, you are saved!");
 		CPrintToChat(client, "{green}[Knife Mode] {white}Attacker is no longer human, you are saved!");
@@ -233,51 +237,26 @@ public Action ByeZM(Handle timer, DataPack pack)
 
 	if (IsPlayerAlive(client) && ZR_IsClientZombie(client))
 	{
-		if (IsValidClient(attacker))
-			DealDamage(client, 999999, attacker, DMG_GENERIC, "weapon_knife"); // enemy down ;)
-		else
-			ForcePlayerSuicide(client);
+		int knife = GetPlayerWeaponSlot(attacker, CS_SLOT_KNIFE);
+		if (knife == -1)
+			knife = 0;
+
+		// Set the boolean variable to true when the zombie is getting the damage to avoid duplicated knives...
+		g_ZombieExplode[client] = true;
+		SDKHooks_TakeDamage(client, attacker, attacker, 999999.0, _, knife);
+		g_ZombieExplode[client] = false;
 	}
+
 	return Plugin_Stop;
 }
 
-public void PlayerSpawn(Handle event, const char[] name, bool dontBroadcast)
+public void Event_PlayerSpawn(Handle event, const char[] name, bool dontBroadcast)
 {
 	if (!g_bEnabled)
 		return;
 
 	int client = GetClientOfUserId(GetEventInt(event, "userid"));
 	g_ZombieExplode[client] = false;
-}
-
-stock Action DealDamage(int nClientVictim, int nDamage, int nClientAttacker = 0, int nDamageType = DMG_GENERIC, char [] sWeapon = "")
-{
-	if (nClientVictim > 0 && IsValidEdict(nClientVictim) && IsClientInGame(nClientVictim) && IsPlayerAlive(nClientVictim) && nDamage > 0)
-	{
-		int EntityPointHurt = CreateEntityByName("point_hurt");
-		if (EntityPointHurt != 0)
-		{
-			char sDamage[16];
-			IntToString(nDamage, sDamage, sizeof(sDamage));
-
-			char sDamageType[32];
-			IntToString(nDamageType, sDamageType, sizeof(sDamageType));
-
-			DispatchKeyValue(nClientVictim,			"targetname",		"war3_hurtme");
-			DispatchKeyValue(EntityPointHurt,		"DamageTarget",		"war3_hurtme");
-			DispatchKeyValue(EntityPointHurt,		"Damage",		sDamage);
-			DispatchKeyValue(EntityPointHurt,		"DamageType",		sDamageType);
-			if (!StrEqual(sWeapon, ""))
-				DispatchKeyValue(EntityPointHurt,	"classname",		sWeapon);
-			DispatchSpawn(EntityPointHurt);
-			AcceptEntityInput(EntityPointHurt,		"Hurt",			(nClientAttacker != 0) ? nClientAttacker : -1);
-			DispatchKeyValue(EntityPointHurt,		"classname",		"point_hurt");
-			DispatchKeyValue(nClientVictim,			"targetname",		"war3_donthurtme");
-
-			RemoveEdict(EntityPointHurt);
-		}
-	}
-	return Plugin_Continue;
 }
 
 void ToggleSpecEnable(bool enable)
@@ -307,36 +286,31 @@ stock int GetTeamAliveCount(int team)
 	{
 		if (!IsClientInGame(i))
 			continue;
+
 		if (IsPlayerAlive(i) && GetClientTeam(i) == team)
 			count++;
 	}
+
 	return count;
 }
 
-bool IsValidClient(int client, bool nobots = false)
-{
-	if (client <= 0 || client > MaxClients || !IsClientConnected(client) || (nobots && IsFakeClient(client)))
-		return false;
-
-	return IsClientInGame(client);
-}
-
-void EnableKnifeMode(bool enable)
+void ToggleKnifeMode(bool enable)
 {
 	if (enable && !g_bEnabled)
 	{
-		HookEvent("player_spawn", PlayerSpawn);
-		HookEvent("player_hurt", EnDamage);
+		HookEvent("player_spawn", Event_PlayerSpawn);
+		HookEvent("player_hurt", Event_PlayerHurt);
 		HookEvent("round_start", Event_RoundStart);
 		LogMessage("[KnifeMode] Knife Mode enabled.");
 	}
 	else if (!enable && g_bEnabled)
 	{
-		UnhookEvent("player_spawn", PlayerSpawn);
-		UnhookEvent("player_hurt", EnDamage);
+		UnhookEvent("player_spawn", Event_PlayerSpawn);
+		UnhookEvent("player_hurt", Event_PlayerHurt);
 		UnhookEvent("round_start", Event_RoundStart);
 		LogMessage("[KnifeMode] Knife Mode disabled.");
 	}
+
 	g_bEnabled = enable;
 
 	SendForward();
@@ -348,16 +322,13 @@ stock void UnHookSpectate()
 	if (g_bSpectateHooked)
 	{
 		g_cvSpectate.RemoveChangeHook(OnConVarChanged);
-		g_cvSpectate = null;
+		delete g_cvSpectate;
 		g_bSpectateHooked = false;
 	}
 }
 
 stock void SendForward()
 {
-	if (g_fwdOnToggle == null)
-		return;
-
 	Call_StartForward(g_fwdOnToggle);
 	Call_PushCell(g_bEnabled);
 	Call_Finish();
