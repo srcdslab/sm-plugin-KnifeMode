@@ -238,8 +238,11 @@ public Action ByeZM(Handle timer, DataPack pack)
 	if (IsPlayerAlive(client) && ZR_IsClientZombie(client))
 	{
 		int knife = GetPlayerWeaponSlot(attacker, CS_SLOT_KNIFE);
+
+		// If the attacker no longer has a knife, clear attacker so ZR treats
+		// this as a world/suicide kill instead of a human-triggered infection.
 		if (knife == -1)
-			knife = 0;
+			attacker = 0;
 
 		// Set the boolean variable to true when the zombie is getting the damage to avoid duplicated knives...
 		g_ZombieExplode[client] = true;
