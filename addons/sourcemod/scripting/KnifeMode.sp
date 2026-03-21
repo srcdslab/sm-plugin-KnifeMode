@@ -169,8 +169,8 @@ void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 	pack.WriteCell(attackerid);
 	CreateTimer(g_fExplodeTime, ByeZM, pack, TIMER_FLAG_NO_MAPCHANGE);
 
-	PrintCenterText(client, "[Knife Mode] You have %0.1f seconds to catch any human or you will die!", g_fExplodeTime, attacker);
-	CPrintToChat(client, "{green}[Knife Mode] {white}You have {red}%0.1f seconds {white}to catch any human {red}or you will die!", g_fExplodeTime, attacker);
+	PrintCenterText(client, "[Knife Mode] You have %0.1f seconds to catch any human or you will die!", g_fExplodeTime);
+	CPrintToChat(client, "{green}[Knife Mode] {white}You have {red}%0.1f seconds {white}to catch any human {red}or you will die!", g_fExplodeTime);
 
 	g_ZombieExplode[client] = true;
 }
