@@ -35,7 +35,7 @@ public Plugin myinfo =
 	name = "[ZR] Knife Mode",
 	author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
 	description = "Kill zombies with knife",
-	version = "2.7.7",
+	version = "2.7.8",
 	url = ""
 }
 
@@ -239,14 +239,20 @@ public Action ByeZM(Handle timer, DataPack pack)
 	{
 		int knife = GetPlayerWeaponSlot(attacker, CS_SLOT_KNIFE);
 
+		// inflictor should be the knife
+		int inflictor = knife;
+
 		// If the attacker no longer has a knife, clear attacker so ZR treats
 		// this as a world/suicide kill instead of a human-triggered infection.
 		if (knife == -1)
+		{
+			inflictor = attacker; // make inflictor the attacker himself if there is no knife
 			attacker = 0;
+		}
 
 		// Set the boolean variable to true when the zombie is getting the damage to avoid duplicated knives...
 		g_ZombieExplode[client] = true;
-		SDKHooks_TakeDamage(client, attacker, attacker, 999999.0, _, knife);
+		SDKHooks_TakeDamage(client, inflictor, attacker, 999999.0, _, knife);
 		g_ZombieExplode[client] = false;
 	}
 
