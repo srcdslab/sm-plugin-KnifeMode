@@ -35,7 +35,7 @@ public Plugin myinfo =
 	name = "[ZR] Knife Mode",
 	author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
 	description = "Kill zombies with knife",
-	version = "2.7.8",
+	version = "2.7.9",
 	url = ""
 }
 
@@ -177,7 +177,10 @@ void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 
 public void ZR_OnClientInfected(int client, int attacker, bool motherInfect, bool respawnOverride, bool respawn)
 {
-	if (!g_bEnabled)
+	if (!g_bEnabled || motherInfect)
+		return;
+
+	if (attacker < 1 || attacker > MaxClients)
 		return;
 
 	if (!g_ZombieExplode[attacker])
