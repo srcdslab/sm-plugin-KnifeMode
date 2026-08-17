@@ -7,24 +7,23 @@ This repository contains a SourcePawn plugin for SourceMod called "KnifeMode" de
 **Key Files:**
 - `addons/sourcemod/scripting/KnifeMode.sp` - Main plugin source (360 lines)
 - `addons/sourcemod/scripting/include/knifemode.inc` - Include file with forwards
-- `sourceknight.yaml` - Build configuration
-- `.github/workflows/ci.yml` - CI/CD pipeline
+- `.github/workflows/ci.yml` - CI/CD pipeline (native GitHub Actions build with spcomp)
 
 ## Technical Environment
 
 **Language & Platform:**
 - SourcePawn (SourceMod scripting language)
-- Target: SourceMod 1.11+ (legacy version, not latest 1.12+)
-- Compiler: SourcePawn compiler via SourceKnight build system
+- Target: SourceMod 1.12.x
+- Compiler: SourcePawn compiler (spcomp) via rumblefrog/setup-sp GitHub Action
 - Games: Counter-Strike: Source, CS:GO (Source engine games)
 
 **Dependencies:**
-- SourceMod 1.11.0-git6934 (specified in sourceknight.yaml)
+- SourceMod 1.12.x
 - MultiColors plugin (for colored chat messages)
 - ZombieReloaded plugin (core game mode dependency)
 
 **Build System:**
-- SourceKnight build system (alternative to traditional spcomp)
+- Native GitHub Actions workflow using spcomp directly
 - GitHub Actions for CI/CD with automatic releases
 - Outputs compiled `.smx` files to `addons/sourcemod/plugins/`
 
@@ -113,8 +112,8 @@ HookConVarChange(cvar, OnConVarChanged);
 
 2. **Build Validation**:
    ```bash
-   # Build using SourceKnight
-   sourceknight build
+   # Build using spcomp (see .github/workflows/ci.yml)
+   spcomp -i include addons/sourcemod/scripting/KnifeMode.sp
    # Check for compilation errors
    ```
 
@@ -162,14 +161,11 @@ HookConVarChange(cvar, OnConVarChanged);
 ## Build Commands
 
 ```bash
-# Local development build
-sourceknight build
+# Local development build (requires spcomp and dependency includes locally)
+spcomp -i include/ KnifeMode.sp
 
 # Clean build artifacts
-rm -rf .sourceknight/
-
-# Check plugin syntax (if spcomp available)
-spcomp -i include/ KnifeMode.sp
+rm -rf addons/sourcemod/plugins/*.smx
 ```
 
 **CI/CD**: GitHub Actions automatically builds on push/PR and creates releases with compiled `.smx` files.
