@@ -334,7 +334,6 @@ stock void UnHookSpectate()
 	if (g_bSpectateHooked)
 	{
 		g_cvSpectate.RemoveChangeHook(OnConVarChanged);
-		delete g_cvSpectate;
 		g_bSpectateHooked = false;
 	}
 }
