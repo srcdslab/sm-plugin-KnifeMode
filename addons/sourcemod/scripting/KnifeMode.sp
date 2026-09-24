@@ -35,7 +35,7 @@ public Plugin myinfo =
 	name = "[ZR] Knife Mode",
 	author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
 	description = "Kill zombies with knife",
-	version = "2.7.10",
+	version = "2.7.11",
 	url = ""
 }
 
@@ -55,6 +55,7 @@ public void OnPluginStart()
 	g_cvKillLastZM = CreateConVar("sm_knifemode_kill_lastzm", "1", "Allow last zombie alive to be killed by a knife ? [0 = No | 1 = Yes, kill it.]", _, true, 0.0, true, 1.0);
 	g_cvTeamKill = CreateConVar("sm_knifemode_allow_teamkill", "1", "Allow knifed zombie to be killed if attacker has become zombie [0 = No | 1 = Yes, allow it.]", _, true, 0.0, true, 1.0);
 
+	AddCommandListener(OnClientJoinTeam, "jointeam");
 
 	g_cvEnabled.AddChangeHook(OnConVarChanged);
 	g_cvExplodeTime.AddChangeHook(OnConVarChanged);
@@ -113,6 +114,15 @@ public void OnMapEnd()
 
 	if (g_bUnload && g_cvEnabled.BoolValue == true)
 		ToggleKnifeMode(false);
+}
+
+Action OnClientJoinTeam(int client, const char[] command, int args)
+{
+	if (!g_bEnabled || !g_ZombieExplode[client])
+		return Plugin_Continue;
+
+	CPrintToChat(client, "{fullred}[Knife Mode] {white}Please wait until you are not knifed to change your team.");
+	return Plugin_Handled;
 }
 
 public void OnConVarChanged(ConVar convar, const char[] oldValue, const char[] newValue)
