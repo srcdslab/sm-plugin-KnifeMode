@@ -118,7 +118,7 @@ public void OnMapEnd()
 
 Action OnClientJoinTeam(int client, const char[] command, int args)
 {
-	if (!g_bEnabled || !g_ZombieExplode[client])
+if (!g_bEnabled || client < 1 || client > MaxClients || !IsClientInGame(client) || !IsPlayerAlive(client) || !g_ZombieExplode[client])
 		return Plugin_Continue;
 
 	CPrintToChat(client, "{fullred}[Knife Mode] {white}Please wait until you are not knifed to change your team.");
