@@ -272,12 +272,12 @@ public Action ByeZM(Handle timer, DataPack pack)
 	return Plugin_Stop;
 }
 
-public void Event_PlayerSpawn(Handle event, const char[] name, bool dontBroadcast)
+public void Event_PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
 {
 	if (!g_bEnabled)
 		return;
 
-	int client = GetClientOfUserId(GetEventInt(event, "userid"));
+	int client = GetClientOfUserId(event.GetInt("userid"));
 	g_ZombieExplode[client] = false;
 }
 
