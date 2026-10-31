@@ -35,7 +35,7 @@ public Plugin myinfo =
 	name = "[ZR] Knife Mode",
 	author = "Franc1sco steam: franug, inGame, maxime1907, .Rushaway",
 	description = "Kill zombies with knife",
-	version = "2.7.12",
+	version = "2.7.13",
 	url = ""
 }
 
@@ -48,6 +48,8 @@ public APLRes AskPluginLoad2(Handle myself, bool late, char[] error, int err_max
 
 public void OnPluginStart()
 {
+	LoadTranslations("KnifeMode.phrases");
+
 	g_cvEnabled = CreateConVar("sm_knifemode_enabled", "1", "Enable or disable Knife Mode [0 = Off | 1 = On]", _, true, 0.0, true, 1.0);
 	g_cvExplodeTime = CreateConVar("sm_knifemode_time", "3", "Seconds that a zombie has to catch any human (60s max)", _, true, 0.1, true, 60.0);
 	g_cvUnload = CreateConVar("sm_knifemode_unload", "0", "Automaticaly disable knifemode on map end [0 = No | 1 = Yes, disable it.]", _, true, 0.0, true, 1.0);
@@ -121,7 +123,7 @@ Action OnClientJoinTeam(int client, const char[] command, int args)
 	if (!g_bEnabled || client < 1 || client > MaxClients || !IsClientInGame(client) || !IsPlayerAlive(client) || !g_ZombieExplode[client])
 		return Plugin_Continue;
 
-	CPrintToChat(client, "{fullred}[Knife Mode] {white}Please wait until you are not knifed to change your team.");
+	CPrintToChat(client, "{fullred}[Knife Mode] {white}%t", "KnifeMode Wait Team Change");
 	return Plugin_Handled;
 }
 
@@ -148,7 +150,7 @@ void Event_RoundStart(Event event, const char[] name, bool dontBroadcast)
 	if (!g_bEnabled)
 		return;
 
-	CPrintToChatAll("{fullred}[Knife Mode] {white}You can use your knife to kill Zombies!");
+	CPrintToChatAll("{fullred}[Knife Mode] {white}%t", "KnifeMode Round Start");
 }
 
 void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
@@ -179,8 +181,8 @@ void Event_PlayerHurt(Event event, const char[] name, bool dontBroadcast)
 	pack.WriteCell(attackerid);
 	CreateTimer(g_fExplodeTime, ByeZM, pack, TIMER_FLAG_NO_MAPCHANGE);
 
-	PrintCenterText(client, "[Knife Mode] You have %0.1f seconds to catch any human or you will die!", g_fExplodeTime);
-	CPrintToChat(client, "{green}[Knife Mode] {white}You have {red}%0.1f seconds {white}to catch any human {red}or you will die!", g_fExplodeTime);
+	PrintCenterText(client, "[Knife Mode] %t", "KnifeMode Knifed Center", g_fExplodeTime);
+	CPrintToChat(client, "{green}[Knife Mode] {white}%t", "KnifeMode Knifed Chat", g_fExplodeTime);
 
 	g_ZombieExplode[client] = true;
 }
@@ -198,8 +200,8 @@ public void ZR_OnClientInfected(int client, int attacker, bool motherInfect, boo
 
 	g_ZombieExplode[attacker] = false;
 
-	PrintCenterText(attacker, "[Knife Mode] You have caught a human, you are saved!");
-	CPrintToChat(attacker, "{green}[Knife Mode] {white}You have caught a human, you are saved!");
+	PrintCenterText(attacker, "[Knife Mode] %t", "KnifeMode Caught Human");
+	CPrintToChat(attacker, "{green}[Knife Mode] {white}%t", "KnifeMode Caught Human");
 }
 
 public Action ByeZM(Handle timer, DataPack pack)
@@ -229,22 +231,22 @@ public Action ByeZM(Handle timer, DataPack pack)
 
 	if (!attacker)
 	{
-		PrintCenterText(client, "[Knife Mode] Attacker left the game, you are saved!");
-		CPrintToChat(client, "{green}[Knife Mode] {white}Attacker left the game, you are saved!");
+		PrintCenterText(client, "[Knife Mode] %t", "KnifeMode Attacker Left");
+		CPrintToChat(client, "{green}[Knife Mode] {white}%t", "KnifeMode Attacker Left");
 		return Plugin_Stop;
 	}
 
 	// Another check : In case 2 different pack is in progress for differents clients
 	if (!g_bKillLastZM && GetTeamAliveCount(CS_TEAM_T) <= 1)
 	{
-		PrintCenterText(client, "[Knife Mode] You are the last Zombie alive, canceling your death!");
-		CPrintToChat(client, "{green}[Knife Mode] {white}You are the last Zombie alive, canceling your death!");
+		PrintCenterText(client, "[Knife Mode] %t", "KnifeMode Last Zombie");
+		CPrintToChat(client, "{green}[Knife Mode] {white}%t", "KnifeMode Last Zombie");
 		return Plugin_Stop;
 	}
 	else if (!g_bTeamKill && (!IsPlayerAlive(attacker) || ZR_IsClientZombie(attacker)))
 	{
-		PrintCenterText(client, "[Knife Mode] Attacker is no longer human, you are saved!");
-		CPrintToChat(client, "{green}[Knife Mode] {white}Attacker is no longer human, you are saved!");
+		PrintCenterText(client, "[Knife Mode] %t", "KnifeMode Attacker Not Human");
+		CPrintToChat(client, "{green}[Knife Mode] {white}%t", "KnifeMode Attacker Not Human");
 		return Plugin_Stop;
 	}
 
