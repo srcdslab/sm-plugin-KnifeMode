@@ -1,0 +1,85 @@
+"Phrases"
+{
+	"KnifeMode Wait Team Change"
+	{
+		"en"		"Please wait until you are not knifed to change your team."
+		"fr"		"Vous ne pouvez pas changer d'équipe tant que vous êtes knifé, veuillez patienter."
+		"ru"		"Нельзя сменить команду, пока на вас действует удар ножом. Подождите."
+		"es"		"Espera a que termine el efecto del cuchillo para cambiar de equipo."
+		"de"		"Bitte warte, bis du nicht mehr geknifed bist, um dein Team zu wechseln."
+		"pt"		"Aguarde até não estar mais sob efeito da faca para trocar de time."
+		"chi"		"被刀击中期间无法更换队伍，请稍候。"
+	}
+	"KnifeMode Round Start"
+	{
+		"en"		"You can use your knife to kill Zombies!"
+		"fr"		"Vous pouvez utiliser votre knife pour tuer les zombies !"
+		"ru"		"Вы можете убивать зомби ножом!"
+		"es"		"¡Puedes usar tu cuchillo para matar zombis!"
+		"de"		"Du kannst dein Messer benutzen, um Zombies zu töten!"
+		"pt"		"Você pode usar sua faca para matar zumbis!"
+		"chi"		"你可以用刀杀死僵尸！"
+	}
+	"KnifeMode Knifed Center"
+	{
+		"#format"	"{1:.1f}"
+		"en"		"You have {1} seconds to catch any human or you will die!"
+		"fr"		"Vous avez {1} secondes pour infecter un humain, sinon vous mourrez !"
+		"ru"		"У вас {1} сек., чтобы заразить человека, иначе вы умрёте!"
+		"es"		"¡Tienes {1} segundos para infectar a un humano o morirás!"
+		"de"		"Du hast {1} Sekunden, um einen Menschen zu infizieren, sonst stirbst du!"
+		"pt"		"Você tem {1} segundos para infectar um humano ou vai morrer!"
+		"chi"		"你有 {1} 秒的时间感染一名人类，否则你将死亡！"
+	}
+	"KnifeMode Knifed Chat"
+	{
+		"#format"	"{1:.1f}"
+		"en"		"You have {red}{1} seconds {white}to catch any human {red}or you will die!"
+		"fr"		"Vous avez {red}{1} secondes {white}pour infecter un humain, {red}sinon vous mourrez !"
+		"ru"		"У вас {red}{1} сек.{white}, чтобы заразить человека, {red}иначе вы умрёте!"
+		"es"		"¡Tienes {red}{1} segundos {white}para infectar a un humano {red}o morirás!"
+		"de"		"Du hast {red}{1} Sekunden{white}, um einen Menschen zu infizieren, {red}sonst stirbst du!"
+		"pt"		"Você tem {red}{1} segundos {white}para infectar um humano {red}ou vai morrer!"
+		"chi"		"你有 {red}{1} 秒{white}的时间感染一名人类，{red}否则你将死亡！"
+	}
+	"KnifeMode Caught Human"
+	{
+		"en"		"You have caught a human, you are saved!"
+		"fr"		"Vous avez infecté un humain, vous êtes sauvé !"
+		"ru"		"Вы заразили человека, вы спасены!"
+		"es"		"¡Has infectado a un humano, estás a salvo!"
+		"de"		"Du hast einen Menschen infiziert, du bist gerettet!"
+		"pt"		"Você infectou um humano, está salvo!"
+		"chi"		"你已感染一名人类，你得救了！"
+	}
+	"KnifeMode Attacker Left"
+	{
+		"en"		"Attacker left the game, you are saved!"
+		"fr"		"L'attaquant a quitté la partie, vous êtes sauvé !"
+		"ru"		"Атакующий покинул игру, вы спасены!"
+		"es"		"¡El atacante abandonó la partida, estás a salvo!"
+		"de"		"Der Angreifer hat das Spiel verlassen, du bist gerettet!"
+		"pt"		"O atacante saiu do jogo, você está salvo!"
+		"chi"		"攻击者已离开游戏，你得救了！"
+	}
+	"KnifeMode Last Zombie"
+	{
+		"en"		"You are the last Zombie alive, canceling your death!"
+		"fr"		"Vous êtes le dernier zombie en vie, votre mort est annulée !"
+		"ru"		"Вы последний живой зомби, ваша смерть отменена!"
+		"es"		"¡Eres el último zombi vivo, se cancela tu muerte!"
+		"de"		"Du bist der letzte lebende Zombie, dein Tod wird abgebrochen!"
+		"pt"		"Você é o último zumbi vivo, sua morte foi cancelada!"
+		"chi"		"你是最后一个存活的僵尸，已取消你的死亡！"
+	}
+	"KnifeMode Attacker Not Human"
+	{
+		"en"		"Attacker is no longer human, you are saved!"
+		"fr"		"L'attaquant n'est plus humain, vous êtes sauvé !"
+		"ru"		"Атакующий больше не человек, вы спасены!"
+		"es"		"¡El atacante ya no es humano, estás a salvo!"
+		"de"		"Der Angreifer ist kein Mensch mehr, du bist gerettet!"
+		"pt"		"O atacante não é mais humano, você está salvo!"
+		"chi"		"攻击者已不再是人类，你得救了！"
+	}
+}
