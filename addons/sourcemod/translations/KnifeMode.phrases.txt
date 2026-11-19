@@ -9,6 +9,12 @@
 		"de"		"Bitte warte, bis du nicht mehr geknifed bist, um dein Team zu wechseln."
 		"pt"		"Aguarde até não estar mais sob efeito da faca para trocar de time."
 		"chi"		"被刀击中期间无法更换队伍，请稍候。"
+		"pl"		"Poczekaj, aż przestaniesz być pod działaniem noża, aby zmienić drużynę."
+		"tr"		"Takımını değiştirmek için bıçak etkisinin bitmesini bekle."
+		"it"		"Attendi che l'effetto del coltello finisca per cambiare squadra."
+		"ua"		"Зачекай, поки припиниться дія ножа, щоб змінити команду."
+		"zho"		"請等到刀擊效果結束後再更換隊伍。"
+		"cze"		"Počkej, až skončí účinek nože, abys mohl změnit tým."
 	}
 	"KnifeMode Round Start"
 	{
@@ -19,6 +25,12 @@
 		"de"		"Du kannst dein Messer benutzen, um Zombies zu töten!"
 		"pt"		"Você pode usar sua faca para matar zumbis!"
 		"chi"		"你可以用刀杀死僵尸！"
+		"pl"		"Możesz użyć noża, aby zabijać zombie!"
+		"tr"		"Zombileri öldürmek için bıçağını kullanabilirsin!"
+		"it"		"Puoi usare il tuo coltello per uccidere gli zombie!"
+		"ua"		"Ти можеш використовувати ніж, щоб убивати зомбі!"
+		"zho"		"你可以用刀殺死殭屍！"
+		"cze"		"Můžeš použít nůž k zabíjení zombíků!"
 	}
 	"KnifeMode Knifed Center"
 	{
@@ -30,6 +42,12 @@
 		"de"		"Du hast {1} Sekunden, um einen Menschen zu infizieren, sonst stirbst du!"
 		"pt"		"Você tem {1} segundos para infectar um humano ou vai morrer!"
 		"chi"		"你有 {1} 秒的时间感染一名人类，否则你将死亡！"
+		"pl"		"Masz {1} sekund, aby złapać człowieka, inaczej zginiesz!"
+		"tr"		"Bir insanı yakalamak için {1} saniyen var, yoksa öleceksin!"
+		"it"		"Hai {1} secondi per prendere un umano, altrimenti morirai!"
+		"ua"		"У тебе є {1} с, щоб упіймати людину, інакше ти помреш!"
+		"zho"		"你有 {1} 秒的時間感染一名人類，否則你將死亡！"
+		"cze"		"Máš {1} sekund na chycení člověka, jinak zemřeš!"
 	}
 	"KnifeMode Knifed Chat"
 	{
@@ -41,6 +59,12 @@
 		"de"		"Du hast {red}{1} Sekunden{white}, um einen Menschen zu infizieren, {red}sonst stirbst du!"
 		"pt"		"Você tem {red}{1} segundos {white}para infectar um humano {red}ou vai morrer!"
 		"chi"		"你有 {red}{1} 秒{white}的时间感染一名人类，{red}否则你将死亡！"
+		"pl"		"Masz {red}{1} sekund{white}, aby złapać człowieka, {red}inaczej zginiesz!"
+		"tr"		"Bir insanı yakalamak için {red}{1} saniyen {white}var, {red}yoksa öleceksin!"
+		"it"		"Hai {red}{1} secondi {white}per prendere un umano, {red}altrimenti morirai!"
+		"ua"		"У тебе є {red}{1} с{white}, щоб упіймати людину, {red}інакше ти помреш!"
+		"zho"		"你有 {red}{1} 秒{white}的時間感染一名人類，{red}否則你將死亡！"
+		"cze"		"Máš {red}{1} sekund {white}na chycení člověka, {red}jinak zemřeš!"
 	}
 	"KnifeMode Caught Human"
 	{
@@ -51,6 +75,12 @@
 		"de"		"Du hast einen Menschen infiziert, du bist gerettet!"
 		"pt"		"Você infectou um humano, está salvo!"
 		"chi"		"你已感染一名人类，你得救了！"
+		"pl"		"Złapałeś człowieka, jesteś uratowany!"
+		"tr"		"Bir insanı yakaladın, kurtuldun!"
+		"it"		"Hai preso un umano, sei salvo!"
+		"ua"		"Ти упіймав людину, ти врятований!"
+		"zho"		"你已感染一名人類，你得救了！"
+		"cze"		"Chytil jsi člověka, jsi zachráněn!"
 	}
 	"KnifeMode Attacker Left"
 	{
@@ -61,6 +91,12 @@
 		"de"		"Der Angreifer hat das Spiel verlassen, du bist gerettet!"
 		"pt"		"O atacante saiu do jogo, você está salvo!"
 		"chi"		"攻击者已离开游戏，你得救了！"
+		"pl"		"Atakujący opuścił grę, jesteś uratowany!"
+		"tr"		"Saldıran oyundan ayrıldı, kurtuldun!"
+		"it"		"L'attaccante ha lasciato la partita, sei salvo!"
+		"ua"		"Нападник вийшов із гри, ти врятований!"
+		"zho"		"攻擊者已離開遊戲，你得救了！"
+		"cze"		"Útočník opustil hru, jsi zachráněn!"
 	}
 	"KnifeMode Last Zombie"
 	{
@@ -71,6 +107,12 @@
 		"de"		"Du bist der letzte lebende Zombie, dein Tod wird abgebrochen!"
 		"pt"		"Você é o último zumbi vivo, sua morte foi cancelada!"
 		"chi"		"你是最后一个存活的僵尸，已取消你的死亡！"
+		"pl"		"Jesteś ostatnim żywym zombie, twoja śmierć została anulowana!"
+		"tr"		"Hayatta kalan son zombisin, ölümün iptal edildi!"
+		"it"		"Sei l'ultimo zombie in vita, la tua morte è annullata!"
+		"ua"		"Ти останній живий зомбі, твою смерть скасовано!"
+		"zho"		"你是最後一個存活的殭屍，已取消你的死亡！"
+		"cze"		"Jsi poslední živý zombík, tvá smrt byla zrušena!"
 	}
 	"KnifeMode Attacker Not Human"
 	{
@@ -81,5 +123,11 @@
 		"de"		"Der Angreifer ist kein Mensch mehr, du bist gerettet!"
 		"pt"		"O atacante não é mais humano, você está salvo!"
 		"chi"		"攻击者已不再是人类，你得救了！"
+		"pl"		"Atakujący nie jest już człowiekiem, jesteś uratowany!"
+		"tr"		"Saldıran artık insan değil, kurtuldun!"
+		"it"		"L'attaccante non è più umano, sei salvo!"
+		"ua"		"Нападник більше не людина, ти врятований!"
+		"zho"		"攻擊者已不再是人類，你得救了！"
+		"cze"		"Útočník už není člověk, jsi zachráněn!"
 	}
 }
